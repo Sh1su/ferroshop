@@ -1,0 +1,41 @@
+:root {
+  --fs-bg: var(--color-background-secondary-default, #f6f7f9);
+  --fs-surface: var(--color-elevation-surface-raised, #fff);
+  --fs-border: var(--color-border-secondary-default, #e0e6ed);
+  --fs-text: var(--color-text-primary-default, #1c1f24);
+  --fs-muted: var(--color-text-secondary-default, #52667a);
+  --fs-accent: var(--color-interaction-primary-default, #0870ff);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--fs-bg);
+  color: var(--fs-text);
+  font-family: var(--font-family-body, 'Inter', system-ui, sans-serif);
+}
+
+a { color: var(--fs-accent); }
+
+.fs-page { padding: 24px 32px; max-width: 1200px; }
+.fs-page-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+.fs-page-header h1 { font-size: 22px; margin: 0; }
+.fs-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0 16px; }
+.fs-muted { color: var(--fs-muted); }
+
+.fs-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.fs-table th, .fs-table td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--fs-border); }
+.fs-table th { font-weight: 600; color: var(--fs-muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+.fs-table tbody tr:hover { background: var(--fs-bg); }
+.fs-table td.num, .fs-table th.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+@media (max-width: 720px) {
+  .fs-page { padding: 16px; }
+  .fs-table .hide-sm { display: none; }
+}
+
+/* Meteor centres cards at 60rem; in the admin pages they should fill the column. */
+.fs-page .mt-card.mt-card { max-width: none; width: 100%; margin-left: 0; margin-right: 0; }
+
+.fs-table-scroll { overflow-x: auto; }

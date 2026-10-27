@@ -1,0 +1,67 @@
+{
+  "app": {
+    "title": "ferroshop Verwaltung"
+  },
+  "login": {
+    "title": "Anmelden",
+    "username": "Benutzername",
+    "password": "Passwort",
+    "submit": "Anmelden",
+    "failed": "Die Zugangsdaten sind falsch."
+  },
+  "nav": {
+    "catalog": "Kataloge",
+    "products": "Produkte",
+    "logout": "Abmelden",
+    "contentLanguage": "Inhaltssprache",
+    "uiLanguage": "Oberflächensprache"
+  },
+  "common": {
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "create": "Anlegen",
+    "search": "Suchen …",
+    "loading": "Lädt …",
+    "saved": "Gespeichert.",
+    "deleted": "Gelöscht.",
+    "confirmDelete": "„{name}“ wirklich löschen?",
+    "yes": "Ja",
+    "no": "Nein",
+    "back": "Zurück",
+    "notFound": "Nicht gefunden.",
+    "error": "Etwas ist schiefgelaufen."
+  },
+  "product": {
+    "list": "Produkte",
+    "new": "Neues Produkt",
+    "empty": "Keine Produkte gefunden.",
+    "name": "Name",
+    "productNumber": "Produktnummer",
+    "stock": "Lagerbestand",
+    "active": "Aktiv",
+    "price": "Preis",
+    "gross": "Brutto",
+    "net": "Netto",
+    "tax": "Steuersatz",
+    "manufacturer": "Hersteller",
+    "description": "Beschreibung",
+    "categories": "Kategorien",
+    "variants": "Varianten",
+    "ean": "EAN",
+    "general": "Allgemein",
+    "pricesStock": "Preise & Lager",
+    "assignment": "Zuordnung",
+    "inheritedHint": "Leere Felder werden vom Hauptprodukt geerbt.",
+    "parent": "Hauptprodukt"
+  },
+  "errors": {
+    "FRAMEWORK__WRITE_CONSTRAINT_VIOLATION": "Dieses Feld ist ein Pflichtfeld.",
+    "FRAMEWORK__DUPLICATE_ENTRY": "Dieser Wert wird bereits verwendet.",
+    "FRAMEWORK__INVALID_TYPE": "Der Wert hat ein ungültiges Format.",
+    "FRAMEWORK__INVALID_PRICE": "Der Preis ist ungültig.",
+    "FRAMEWORK__INVALID_UUID": "Ungültige Referenz.",
+    "FRAMEWORK__PASSWORD_TOO_SHORT": "Das Passwort ist zu kurz.",
+    "checkInput": "Bitte prüfe deine Eingaben."
+  }
+}

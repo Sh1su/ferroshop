@@ -1,0 +1,67 @@
+{
+  "app": {
+    "title": "ferroshop Administration"
+  },
+  "login": {
+    "title": "Log in",
+    "username": "Username",
+    "password": "Password",
+    "submit": "Log in",
+    "failed": "The credentials are incorrect."
+  },
+  "nav": {
+    "catalog": "Catalog",
+    "products": "Products",
+    "logout": "Log out",
+    "contentLanguage": "Content language",
+    "uiLanguage": "Interface language"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "create": "Create",
+    "search": "Search…",
+    "loading": "Loading…",
+    "saved": "Saved.",
+    "deleted": "Deleted.",
+    "confirmDelete": "Really delete \"{name}\"?",
+    "yes": "Yes",
+    "no": "No",
+    "back": "Back",
+    "notFound": "Not found.",
+    "error": "Something went wrong."
+  },
+  "product": {
+    "list": "Products",
+    "new": "New product",
+    "empty": "No products found.",
+    "name": "Name",
+    "productNumber": "Product number",
+    "stock": "Stock",
+    "active": "Active",
+    "price": "Price",
+    "gross": "Gross",
+    "net": "Net",
+    "tax": "Tax rate",
+    "manufacturer": "Manufacturer",
+    "description": "Description",
+    "categories": "Categories",
+    "variants": "Variants",
+    "ean": "EAN",
+    "general": "General",
+    "pricesStock": "Prices & stock",
+    "assignment": "Assignment",
+    "inheritedHint": "Empty fields are inherited from the parent product.",
+    "parent": "Parent product"
+  },
+  "errors": {
+    "FRAMEWORK__WRITE_CONSTRAINT_VIOLATION": "This field is required.",
+    "FRAMEWORK__DUPLICATE_ENTRY": "This value is already in use.",
+    "FRAMEWORK__INVALID_TYPE": "The value has the wrong format.",
+    "FRAMEWORK__INVALID_PRICE": "The price is invalid.",
+    "FRAMEWORK__INVALID_UUID": "Invalid reference.",
+    "FRAMEWORK__PASSWORD_TOO_SHORT": "The password is too short.",
+    "checkInput": "Please check your input."
+  }
+}
