@@ -13,6 +13,7 @@ export const router = createRouter({
         { path: 'products', name: 'product.list', component: () => import('./views/ProductList.vue') },
         { path: 'products/new', name: 'product.create', component: () => import('./views/ProductDetail.vue') },
         { path: 'products/:id', name: 'product.detail', component: () => import('./views/ProductDetail.vue'), props: true },
+        { path: 'organigram', name: 'organigram', component: () => import('./views/OrganigramView.vue') },
       ],
     },
   ],

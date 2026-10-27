@@ -14,7 +14,9 @@
     "products": "Products",
     "logout": "Log out",
     "contentLanguage": "Content language",
-    "uiLanguage": "Interface language"
+    "uiLanguage": "Interface language",
+    "team": "Team",
+    "organigram": "Organigram"
   },
   "common": {
     "save": "Save",
@@ -54,6 +56,18 @@
     "assignment": "Assignment",
     "inheritedHint": "Empty fields are inherited from the parent product.",
     "parent": "Parent product"
+  },
+  "organigram": {
+    "title": "Organigram",
+    "summary": "{members} members · {levels} levels",
+    "expandAll": "Expand all",
+    "collapseAll": "Collapse all",
+    "expand": "Expand team",
+    "collapse": "Collapse team",
+    "inactive": "Inactive",
+    "unassigned": "Not assigned",
+    "empty": "No members with a manager yet.",
+    "fit": "Fit to width"
   },
   "errors": {
     "FRAMEWORK__WRITE_CONSTRAINT_VIOLATION": "This field is required.",

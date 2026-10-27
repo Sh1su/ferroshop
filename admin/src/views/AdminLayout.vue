@@ -47,6 +47,8 @@ onMounted(async () => {
         <RouterLink :to="{ name: 'product.list' }" :class="{ active: route.path.startsWith('/products') }">
           {{ t('nav.products') }}
         </RouterLink>
+        <p class="section">{{ t('nav.team') }}</p>
+        <RouterLink :to="{ name: 'organigram' }" :class="{ active: route.name === 'organigram' }">{{ t('nav.organigram') }}</RouterLink>
       </nav>
       <div class="sidebar-footer">
         <MtSelect
@@ -87,6 +89,7 @@ onMounted(async () => {
 }
 .brand { font-size: 20px; font-weight: 700; text-decoration: none; color: var(--fs-text); letter-spacing: -.02em; }
 .section { font-size: 12px; text-transform: uppercase; color: var(--fs-muted); margin: 0 0 6px; letter-spacing: .04em; }
+nav .section:not(:first-child) { margin-top: 12px; }
 nav a { display: block; padding: 8px 10px; border-radius: 6px; color: var(--fs-text); text-decoration: none; }
 nav a.active { background: var(--fs-bg); color: var(--fs-accent); font-weight: 600; }
 .sidebar-footer { margin-top: auto; }

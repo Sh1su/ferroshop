@@ -14,7 +14,9 @@
     "products": "Produkte",
     "logout": "Abmelden",
     "contentLanguage": "Inhaltssprache",
-    "uiLanguage": "Oberflächensprache"
+    "uiLanguage": "Oberflächensprache",
+    "team": "Team",
+    "organigram": "Organigramm"
   },
   "common": {
     "save": "Speichern",
@@ -54,6 +56,18 @@
     "assignment": "Zuordnung",
     "inheritedHint": "Leere Felder werden vom Hauptprodukt geerbt.",
     "parent": "Hauptprodukt"
+  },
+  "organigram": {
+    "title": "Organigramm",
+    "summary": "{members} Mitglieder · {levels} Ebenen",
+    "expandAll": "Alle aufklappen",
+    "collapseAll": "Alle zuklappen",
+    "expand": "Team aufklappen",
+    "collapse": "Team zuklappen",
+    "inactive": "Inaktiv",
+    "unassigned": "Ohne Zuordnung",
+    "empty": "Noch keine Mitglieder mit Vorgesetzten hinterlegt.",
+    "fit": "Einpassen"
   },
   "errors": {
     "FRAMEWORK__WRITE_CONSTRAINT_VIOLATION": "Dieses Feld ist ein Pflichtfeld.",

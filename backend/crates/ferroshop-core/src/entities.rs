@@ -154,9 +154,14 @@ entity! {
         bool("admin", "admin"),
         bool("active", "active"),
         string("localeCode", "locale_code"),
+        fk("managerId", "manager_id", "user"),
+        string("jobTitle", "job_title") [SEARCHABLE],
+        string("department", "department") [SEARCHABLE],
         datetime("createdAt", "created_at") [READ_ONLY],
         datetime("updatedAt", "updated_at") [READ_ONLY],
         many_to_many("aclRoles", "acl_role", "acl_user_role", "user_id", "acl_role_id"),
+        many_to_one("manager", "user", "managerId"),
+        one_to_many("reports", "user", "managerId"),
     }
 }
 

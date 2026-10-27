@@ -67,7 +67,7 @@ enum Command {
         #[arg(long)]
         admin: bool,
     },
-    /// Fills the shop with demo manufacturers, categories, products, customers and orders.
+    /// Fills the shop with demo manufacturers, categories, products, customers, orders and team members.
     #[command(name = "demo-data")]
     DemoData,
 }

@@ -69,6 +69,7 @@ pub async fn run(db: &Db) -> Result<usize> {
         }
     }
     customers_and_orders(db, &catalog).await?;
+    team(db).await?;
     Ok(count)
 }
 
@@ -144,6 +145,52 @@ async fn customers_and_orders(db: &Db, catalog: &[(uuid::Uuid, &str, f64)]) -> R
                 order_state::transition(db, oid, *machine, transition, &ctx).await?;
             }
         }
+    }
+    Ok(())
+}
+
+/// Administration users with reporting lines, so the organigram has several levels and branches.
+async fn team(db: &Db) -> Result<()> {
+    let ctx = Context::default();
+    // (first name, last name, job title, department, index of the manager in this list)
+    let members: [(&str, &str, &str, &str, Option<usize>); 25] = [
+        ("Katharina", "Berg", "Geschäftsführerin", "Geschäftsführung", None),
+        ("Jonas", "Weber", "CTO", "Technik", Some(0)),
+        ("Mira", "Schulz", "Teamlead Backend", "Technik", Some(1)),
+        ("Tim", "Braun", "Rust-Entwickler", "Technik", Some(2)),
+        ("Lea", "Fischer", "Rust-Entwicklerin", "Technik", Some(2)),
+        ("Can", "Yilmaz", "Datenbank-Entwickler", "Technik", Some(2)),
+        ("Paul", "Wagner", "Teamlead Frontend", "Technik", Some(1)),
+        ("Sophie", "Hoffmann", "Vue-Entwicklerin", "Technik", Some(6)),
+        ("Noah", "Becker", "UX-Designer", "Technik", Some(6)),
+        ("Elif", "Kaya", "DevOps Engineer", "Technik", Some(1)),
+        ("Stefan", "Richter", "Leiter Operations", "Operations", Some(0)),
+        ("Anna", "Klein", "Lagerleiterin", "Logistik", Some(10)),
+        ("Lukas", "Wolf", "Lagerist", "Logistik", Some(11)),
+        ("Marie", "Schröder", "Lageristin", "Logistik", Some(11)),
+        ("Ben", "Neumann", "Versand", "Logistik", Some(11)),
+        ("Emma", "Schwarz", "Retourenmanagement", "Logistik", Some(11)),
+        ("Julia", "Zimmermann", "Leiterin Kundenservice", "Kundenservice", Some(10)),
+        ("Felix", "Krüger", "Kundenberater", "Kundenservice", Some(16)),
+        ("Hannah", "Hartmann", "Kundenberaterin", "Kundenservice", Some(16)),
+        ("Laura", "Lange", "Leiterin Marketing", "Marketing", Some(0)),
+        ("Max", "Schmitt", "SEO-Manager", "Marketing", Some(19)),
+        ("Nina", "Werner", "Content-Managerin", "Marketing", Some(19)),
+        ("Jan", "Krause", "Werkstudent Content", "Marketing", Some(21)),
+        ("Thomas", "Meier", "Leiter Finanzen", "Finanzen", Some(0)),
+        ("Sabine", "Lehmann", "Buchhalterin", "Finanzen", Some(23)),
+    ];
+    let mut ids: Vec<String> = Vec::new();
+    for (i, (first, last, title, department, manager)) in members.iter().enumerate() {
+        let username =
+            format!("{}.{}", first.to_lowercase(), last.to_lowercase().replace('ö', "oe").replace('ü', "ue"));
+        let user = json!({
+            "username": username, "email": format!("{username}@ferroshop.example"), "password": "demo-password",
+            "firstName": first, "lastName": last, "jobTitle": title, "department": department,
+            "managerId": manager.map(|m| ids[m].clone()), "localeCode": "de-DE", "active": i != 22,
+        });
+        let uid = write::write(db, "user", &user, WriteMode::Create, &ctx).await?;
+        ids.push(id::format(uid));
     }
     Ok(())
 }
