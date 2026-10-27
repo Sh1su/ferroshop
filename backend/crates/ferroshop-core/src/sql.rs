@@ -71,7 +71,7 @@ pub(crate) enum Lang {
 }
 
 fn column_expr(def: &EntityDefinition, alias: &str, field: &Field, lang: Lang) -> String {
-    if let FieldKind::Computed(sql) = field.kind {
+    if let Some(sql) = field.kind.computed_sql() {
         return sql.replace("{a}", alias);
     }
     if !field.translated() {

@@ -11,6 +11,7 @@ fn field_type(field: &Field) -> &'static str {
         FieldKind::String | FieldKind::Password => "string",
         FieldKind::LongText => "text",
         FieldKind::Int | FieldKind::Computed(_) => "int",
+        FieldKind::ComputedText(_) => "string",
         FieldKind::Float => "float",
         FieldKind::Bool => "boolean",
         FieldKind::DateTime => "date",
@@ -36,7 +37,7 @@ pub fn entity_schema() -> Value {
             if field.has(crate::definition::INHERITED) {
                 flags.insert("inherited".into(), json!(true));
             }
-            if field.has(READ_ONLY) || matches!(field.kind, FieldKind::Computed(_)) {
+            if field.has(READ_ONLY) || field.kind.computed_sql().is_some() {
                 flags.insert("write_protected".into(), json!(true));
             }
             let mut prop = json!({ "type": field_type(field), "flags": flags });
@@ -71,6 +72,7 @@ fn openapi_property(field: &Field) -> Value {
         FieldKind::String | FieldKind::LongText => json!({ "type": "string" }),
         FieldKind::Password => json!({ "type": "string", "writeOnly": true }),
         FieldKind::Int | FieldKind::Computed(_) => json!({ "type": "integer" }),
+        FieldKind::ComputedText(_) => json!({ "type": "string" }),
         FieldKind::Float => json!({ "type": "number" }),
         FieldKind::Bool => json!({ "type": "boolean" }),
         FieldKind::DateTime => json!({ "type": "string", "format": "date-time" }),
@@ -101,7 +103,7 @@ fn entity_component(def: &EntityDefinition) -> Value {
     let mut required = Vec::new();
     for field in def.fields {
         let mut prop = openapi_property(field);
-        if field.has(READ_ONLY) || matches!(field.kind, FieldKind::Computed(_)) {
+        if field.has(READ_ONLY) || field.kind.computed_sql().is_some() {
             prop["readOnly"] = json!(true);
         }
         if field.required() && field.kind != FieldKind::Id {

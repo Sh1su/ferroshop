@@ -7,6 +7,7 @@ use axum::http::{HeaderMap, header};
 use axum::middleware::Next;
 use axum::response::Response;
 use chrono::{Duration, Utc};
+use ferroshop_core::acl::Permissions;
 use ferroshop_core::{id, password};
 use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
@@ -187,6 +188,13 @@ pub async fn require_token(
     let data = jsonwebtoken::decode::<Claims>(token, &state.keys.decoding, &Validation::new(Algorithm::HS256))
         .map_err(|_| ApiError::Unauthorized("The access token is invalid or expired."))?;
     let id = id::parse(&data.claims.sub).ok_or(ApiError::Unauthorized("The access token is invalid or expired."))?;
+    // Loaded per request so deactivating a user or changing roles takes effect immediately.
+    let permissions = match data.claims.kind {
+        PrincipalKind::User => Permissions::for_user(&state.db, id).await?,
+        PrincipalKind::Integration => Permissions::for_integration(&state.db, id).await?,
+    }
+    .ok_or(ApiError::Unauthorized("The access token is invalid or expired."))?;
     request.extensions_mut().insert(Principal { kind: data.claims.kind, id });
+    request.extensions_mut().insert(permissions);
     Ok(next.run(request).await)
 }

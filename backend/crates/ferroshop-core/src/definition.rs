@@ -21,6 +21,8 @@ pub enum FieldKind {
     Password,
     /// Read-only SQL expression; `{a}` is replaced with the row alias.
     Computed(&'static str),
+    /// Like [`FieldKind::Computed`], but text-valued.
+    ComputedText(&'static str),
     ManyToOne {
         entity: &'static str,
         fk: &'static str,
@@ -38,6 +40,14 @@ pub enum FieldKind {
 }
 
 impl FieldKind {
+    /// The SQL template of a computed (read-only) field.
+    pub fn computed_sql(self) -> Option<&'static str> {
+        match self {
+            Self::Computed(sql) | Self::ComputedText(sql) => Some(sql),
+            _ => None,
+        }
+    }
+
     pub fn is_association(self) -> bool {
         matches!(self, Self::ManyToOne { .. } | Self::OneToMany { .. } | Self::ManyToMany { .. })
     }
@@ -53,6 +63,7 @@ impl FieldKind {
             Self::DateTime => "timestamptz",
             Self::Json | Self::Price => "jsonb",
             Self::Computed(_) => "numeric",
+            Self::ComputedText(_) => "text",
             _ => "text",
         }
     }
@@ -98,7 +109,7 @@ impl Field {
 
     /// Stored as a column of the entity table itself.
     pub fn is_own_column(&self) -> bool {
-        !self.translated() && !self.kind.is_association() && !matches!(self.kind, FieldKind::Computed(_))
+        !self.translated() && !self.kind.is_association() && self.kind.computed_sql().is_none()
     }
 }
 
@@ -179,6 +190,7 @@ macro_rules! entity {
     (@field price ($name:expr, $col:expr)) => { $crate::definition::Field::new($name, $col, $crate::definition::FieldKind::Price) };
     (@field password ($name:expr, $col:expr)) => { $crate::definition::Field::new($name, $col, $crate::definition::FieldKind::Password) };
     (@field computed ($name:expr, $sql:expr)) => { $crate::definition::Field::new($name, "", $crate::definition::FieldKind::Computed($sql)) };
+    (@field computed_text ($name:expr, $sql:expr)) => { $crate::definition::Field::new($name, "", $crate::definition::FieldKind::ComputedText($sql)) };
     (@field many_to_one ($name:expr, $target:expr, $fk:expr)) => {
         $crate::definition::Field::new($name, "", $crate::definition::FieldKind::ManyToOne { entity: $target, fk: $fk })
     };

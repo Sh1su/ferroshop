@@ -10,11 +10,14 @@ use ferroshop_core::{Context, Criteria, entities, id, read, schema};
 use serde::Deserialize;
 use serde_json::{Map, Value, json};
 
+use ferroshop_core::acl::{Action, Permissions};
+
 use crate::auth::Principal;
+use crate::permission;
 use crate::{ApiError, AppState};
 
 /// Builds the request context from `sw-language-id` / `sw-inheritance` headers.
-fn context(headers: &HeaderMap, principal: &Principal) -> Result<Context, ApiError> {
+pub(crate) fn context(headers: &HeaderMap, principal: &Principal) -> Result<Context, ApiError> {
     let mut ctx = Context { actor_id: Some(principal.id), ..Context::default() };
     if let Some(lang) = headers.get("sw-language-id").and_then(|v| v.to_str().ok()) {
         ctx.language_id = id::parse(lang).ok_or_else(|| ApiError::BadRequest("invalid sw-language-id".into()))?;
@@ -39,6 +42,7 @@ fn search_response(result: read::SearchResult) -> Json<Value> {
 pub async fn search(
     State(state): State<AppState>,
     Extension(principal): Extension<Principal>,
+    Extension(perms): Extension<Permissions>,
     Path(entity): Path<String>,
     headers: HeaderMap,
     body: Bytes,
@@ -49,6 +53,9 @@ pub async fn search(
     } else {
         serde_json::from_slice(&body).map_err(|e| ApiError::BadRequest(format!("invalid criteria: {e}")))?
     };
+    let def = permission::definition(&entity)?;
+    permission::require(&perms, def.name, Action::Read)?;
+    permission::require_criteria(&perms, def, &criteria)?;
     Ok(search_response(read::search(&state.db, &entity, &capped(criteria), &ctx).await?))
 }
 
@@ -63,11 +70,13 @@ pub struct ListQuery {
 pub async fn list(
     State(state): State<AppState>,
     Extension(principal): Extension<Principal>,
+    Extension(perms): Extension<Permissions>,
     Path(entity): Path<String>,
     Query(query): Query<ListQuery>,
     headers: HeaderMap,
 ) -> Result<Json<Value>, ApiError> {
     let ctx = context(&headers, &principal)?;
+    permission::require(&perms, permission::definition(&entity)?.name, Action::Read)?;
     let criteria = Criteria { limit: query.limit, page: query.page, term: query.term, ..Default::default() };
     Ok(search_response(read::search(&state.db, &entity, &capped(criteria), &ctx).await?))
 }
@@ -75,10 +84,12 @@ pub async fn list(
 pub async fn detail(
     State(state): State<AppState>,
     Extension(principal): Extension<Principal>,
+    Extension(perms): Extension<Permissions>,
     Path((entity, entity_id)): Path<(String, String)>,
     headers: HeaderMap,
 ) -> Result<Json<Value>, ApiError> {
     let ctx = context(&headers, &principal)?;
+    permission::require(&perms, permission::definition(&entity)?.name, Action::Read)?;
     let data = read::read(&state.db, &entity, &entity_id, &Criteria::default(), &ctx).await?;
     Ok(Json(json!({ "data": data })))
 }
@@ -118,6 +129,7 @@ async fn write_response(
 pub async fn create(
     State(state): State<AppState>,
     Extension(principal): Extension<Principal>,
+    Extension(perms): Extension<Permissions>,
     Path(entity): Path<String>,
     Query(query): Query<WriteQuery>,
     headers: HeaderMap,
@@ -125,6 +137,9 @@ pub async fn create(
 ) -> Result<Response, ApiError> {
     let ctx = context(&headers, &principal)?;
     let payload = parse_body(&body)?;
+    let def = permission::definition(&entity)?;
+    permission::require(&perms, def.name, Action::Create)?;
+    permission::require_write(&perms, def, &payload)?;
     let entity_id = write::write(&state.db, &entity, &payload, WriteMode::Create, &ctx).await?;
     write_response(&state, &entity, entity_id, &ctx, &query).await
 }
@@ -132,6 +147,7 @@ pub async fn create(
 pub async fn update(
     State(state): State<AppState>,
     Extension(principal): Extension<Principal>,
+    Extension(perms): Extension<Permissions>,
     Path((entity, entity_id)): Path<(String, String)>,
     Query(query): Query<WriteQuery>,
     headers: HeaderMap,
@@ -139,6 +155,9 @@ pub async fn update(
 ) -> Result<Response, ApiError> {
     let ctx = context(&headers, &principal)?;
     let mut payload = parse_body(&body)?;
+    let def = permission::definition(&entity)?;
+    permission::require(&perms, def.name, Action::Update)?;
+    permission::require_write(&perms, def, &payload)?;
     match payload.as_object_mut() {
         Some(map) => {
             map.insert("id".into(), Value::String(entity_id));
@@ -152,10 +171,16 @@ pub async fn update(
 pub async fn remove(
     State(state): State<AppState>,
     Extension(principal): Extension<Principal>,
+    Extension(perms): Extension<Permissions>,
     Path((entity, entity_id)): Path<(String, String)>,
     headers: HeaderMap,
 ) -> Result<StatusCode, ApiError> {
     let ctx = context(&headers, &principal)?;
+    let def = permission::definition(&entity)?;
+    permission::require(&perms, def.name, Action::Delete)?;
+    if def.name == "user" && id::parse(&entity_id) == Some(principal.id) {
+        return Err(ApiError::BadRequest("you cannot delete your own account".into()));
+    }
     write::delete(&state.db, &entity, &[entity_id], &ctx).await?;
     Ok(StatusCode::NO_CONTENT)
 }
@@ -163,10 +188,16 @@ pub async fn remove(
 pub async fn remove_mapping(
     State(state): State<AppState>,
     Extension(principal): Extension<Principal>,
+    Extension(perms): Extension<Permissions>,
     Path((entity, entity_id, association, reference_id)): Path<(String, String, String, String)>,
     headers: HeaderMap,
 ) -> Result<StatusCode, ApiError> {
     let ctx = context(&headers, &principal)?;
+    let def = permission::definition(&entity)?;
+    permission::require(&perms, def.name, Action::Update)?;
+    if def.name == "user" && association == "aclRoles" && !perms.admin {
+        return Err(ApiError::Forbidden("only administrators can change roles".into()));
+    }
     write::delete_mapping(&state.db, &entity, &entity_id, &association, &reference_id, &ctx).await?;
     Ok(StatusCode::NO_CONTENT)
 }

@@ -8,6 +8,7 @@ use anyhow::Context as _;
 use axum::Router;
 use clap::{Parser, Subcommand};
 use ferroshop_admin_api::AppState;
+use ferroshop_core::media::MediaStore;
 use ferroshop_core::write::{self, WriteMode};
 use ferroshop_core::{Context, Db};
 use serde_json::json;
@@ -39,6 +40,9 @@ enum Command {
         /// Apply pending migrations before starting.
         #[arg(long, env = "AUTO_MIGRATE")]
         migrate: bool,
+        /// Where media files live: a local directory or `s3://bucket/prefix`.
+        #[arg(long, env = "MEDIA_STORAGE", default_value = "./var/media")]
+        media_storage: String,
     },
     /// Applies pending database migrations.
     Migrate,
@@ -55,7 +59,15 @@ enum Command {
         #[arg(long, default_value = "")]
         last_name: String,
     },
-    /// Fills the shop with demo manufacturers, categories and products.
+    /// Creates an API integration and prints its credentials once.
+    #[command(name = "integration:create")]
+    IntegrationCreate {
+        label: String,
+        /// Grant full access instead of no privileges (assign roles in the Administration).
+        #[arg(long)]
+        admin: bool,
+    },
+    /// Fills the shop with demo manufacturers, categories, products, customers and orders.
     #[command(name = "demo-data")]
     DemoData,
 }
@@ -78,14 +90,17 @@ async fn main() -> anyhow::Result<()> {
             ferroshop_core::MIGRATOR.run(&db).await?;
             println!("migrations applied");
         }
-        Command::Serve { listen, secret, admin_dir, migrate } => {
+        Command::Serve { listen, secret, admin_dir, migrate, media_storage } => {
             if migrate {
                 ferroshop_core::MIGRATOR.run(&db).await?;
             }
             anyhow::ensure!(secret.len() >= 32, "APP_SECRET must be at least 32 characters");
             let admin = ServeDir::new(&admin_dir).fallback(ServeFile::new(format!("{admin_dir}/index.html")));
+            let media = MediaStore::from_config(&media_storage).map_err(|e| anyhow::anyhow!(e))?;
+            let state = AppState::new(db, &secret, media);
             let app = Router::new()
-                .merge(ferroshop_admin_api::router(AppState::new(db, &secret)))
+                .merge(ferroshop_admin_api::router(state.clone()))
+                .merge(ferroshop_admin_api::media_router(state))
                 .nest_service("/admin", admin)
                 .layer(CorsLayer::permissive())
                 .layer(TraceLayer::new_for_http());
@@ -103,12 +118,34 @@ async fn main() -> anyhow::Result<()> {
                 write::write(&db, "user", &payload, WriteMode::Create, &Context::default()).await.map_err(describe)?;
             println!("created admin user {username} ({})", ferroshop_core::id::format(id));
         }
+        Command::IntegrationCreate { label, admin } => {
+            let access_key = format!("SWIA{}", random_token(18).to_uppercase());
+            let secret = random_token(40);
+            let payload = json!({ "label": label, "accessKey": access_key, "secretAccessKey": secret, "admin": admin });
+            write::write(&db, "integration", &payload, WriteMode::Create, &Context::default())
+                .await
+                .map_err(describe)?;
+            println!(
+                "client_id:     {access_key}\nclient_secret: {secret}\n(the secret is not stored in plain text and cannot be shown again)"
+            );
+        }
         Command::DemoData => {
             let count = demo::run(&db).await.map_err(describe)?;
             println!("created {count} demo products");
         }
     }
     Ok(())
+}
+
+/// Random alphanumeric token from the OS RNG (via UUIDv4 bytes).
+fn random_token(len: usize) -> String {
+    const CHARS: &[u8] = b"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    std::iter::repeat_with(|| uuid::Uuid::new_v4().into_bytes())
+        .flatten()
+        .filter(|b| (*b as usize) < CHARS.len() * 4)
+        .map(|b| CHARS[b as usize % CHARS.len()] as char)
+        .take(len)
+        .collect()
 }
 
 fn describe(err: ferroshop_core::Error) -> anyhow::Error {

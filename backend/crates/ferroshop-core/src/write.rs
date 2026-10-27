@@ -175,7 +175,7 @@ impl Writer<'_, '_> {
                     self.error(&ptr, "FRAMEWORK__WRITE_EXTRA_FIELD", format!("`{key}` does not exist on {}", def.name));
                     continue;
                 };
-                if field.has(READ_ONLY) || matches!(field.kind, FieldKind::Computed(_)) {
+                if field.has(READ_ONLY) || field.kind.computed_sql().is_some() {
                     continue;
                 }
                 match field.kind {
@@ -215,6 +215,22 @@ impl Writer<'_, '_> {
             if !self.errors.is_empty() {
                 return Ok(id);
             }
+
+            // Foreign keys pointing at children created in this same payload (e.g. `coverId` ->
+            // one of `media`) can only be set once those children exist.
+            let child_entities: Vec<&str> = row
+                .one_to_many
+                .iter()
+                .filter_map(|(f, _, _)| match f.kind {
+                    FieldKind::OneToMany { entity, .. } => Some(entity),
+                    _ => None,
+                })
+                .collect();
+            let (deferred, columns): (Vec<_>, Vec<_>) =
+                std::mem::take(&mut row.columns).into_iter().partition(|(f, v)| {
+                    v.is_some() && matches!(f.kind, FieldKind::Fk(target) if child_entities.contains(&target))
+                });
+            row.columns = columns;
 
             self.save_row(def, id, creating, &row).await?;
             for (lang, values) in &row.translations {
@@ -259,6 +275,10 @@ impl Writer<'_, '_> {
                     );
                     binds.query(&sql).execute(&mut **self.tx).await.map_err(Error::from_db)?;
                 }
+            }
+            if !deferred.is_empty() {
+                let row = Row_ { columns: deferred, ..Row_::default() };
+                self.save_row(def, id, false, &row).await?;
             }
             let action = if creating { "insert" } else { "update" };
             audit(self.tx, def, id, action, payload, self.ctx).await?;
@@ -387,6 +407,7 @@ impl Writer<'_, '_> {
                 }
             },
             FieldKind::Computed(_)
+            | FieldKind::ComputedText(_)
             | FieldKind::ManyToOne { .. }
             | FieldKind::OneToMany { .. }
             | FieldKind::ManyToMany { .. } => {

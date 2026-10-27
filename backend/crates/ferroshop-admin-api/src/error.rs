@@ -9,6 +9,7 @@ use serde_json::{Value, json};
 pub enum ApiError {
     Core(Error),
     Unauthorized(&'static str),
+    Forbidden(String),
     BadRequest(String),
 }
 
@@ -38,6 +39,9 @@ impl IntoResponse for ApiError {
         let (status, errors) = match self {
             Self::Unauthorized(detail) => {
                 (StatusCode::UNAUTHORIZED, vec![entry(StatusCode::UNAUTHORIZED, "FRAMEWORK__UNAUTHORIZED", detail)])
+            }
+            Self::Forbidden(detail) => {
+                (StatusCode::FORBIDDEN, vec![entry(StatusCode::FORBIDDEN, "FRAMEWORK__PERMISSION_DENIED", detail)])
             }
             Self::BadRequest(detail) => {
                 (StatusCode::BAD_REQUEST, vec![entry(StatusCode::BAD_REQUEST, "FRAMEWORK__INVALID_REQUEST", detail)])
@@ -69,6 +73,13 @@ impl IntoResponse for ApiError {
                         })
                         .collect();
                     (StatusCode::BAD_REQUEST, errors)
+                }
+                Error::Storage(detail) => {
+                    tracing::error!(error = %detail, "storage error");
+                    (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        vec![entry(StatusCode::INTERNAL_SERVER_ERROR, "CONTENT__MEDIA_STORAGE", "storage error")],
+                    )
                 }
                 Error::Database(db) => {
                     tracing::error!(error = %db, "database error");

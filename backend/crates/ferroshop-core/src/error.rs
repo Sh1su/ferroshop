@@ -28,6 +28,8 @@ pub enum Error {
     Validation(Vec<WriteError>),
     #[error("{0}")]
     Conflict(String),
+    #[error("storage error: {0}")]
+    Storage(String),
     #[error(transparent)]
     Database(#[from] sqlx::Error),
 }

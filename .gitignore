@@ -3,3 +3,4 @@ node_modules
 /admin/dist
 .env
 *.log
+/backend/var
