@@ -95,3 +95,17 @@ cd backend && cargo test     # needs DATABASE_URL; sqlx::test creates a database
 ## License
 
 MIT
+
+## Deployment via NetBird
+
+`deploy/netbird/` runs ferroshop so that it is only reachable inside the NetBird network:
+the app is published on the host's NetBird IP only and the database is not published at all.
+
+```sh
+cd deploy/netbird
+cp .env.example .env     # set NETBIRD_IP, POSTGRES_PASSWORD, APP_SECRET (openssl rand -hex 32)
+docker compose up -d --build
+docker compose exec -e FERROSHOP_PASSWORD='…' app ferroshop user:create admin --email admin@example.com
+```
+
+Update: `git pull && docker compose up -d --build` (migrations run on start).
