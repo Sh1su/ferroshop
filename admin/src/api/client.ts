@@ -10,6 +10,14 @@ export type Currency = Schemas['Currency']
 export type User = Schemas['User']
 export type Price = Schemas['Price']
 export type Criteria = Schemas['Criteria']
+export type Customer = Schemas['Customer']
+export type CustomerAddress = Schemas['CustomerAddress']
+export type Order = Schemas['Order']
+export type OrderLineItem = Schemas['OrderLineItem']
+export type OrderAddress = Schemas['OrderAddress']
+export type Media = Schemas['Media']
+export type ProductMedia = Schemas['ProductMedia']
+export type AclRole = Schemas['AclRole']
 
 export interface SearchResult<T> {
   total: number
@@ -116,10 +124,14 @@ async function refresh(): Promise<boolean> {
   return refreshing
 }
 
-export async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
+async function refreshIfNeeded() {
   if (tokens && tokens.expiresAt - Date.now() < 30_000) {
     await refresh()
   }
+}
+
+export async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
+  await refreshIfNeeded()
   const send = () =>
     fetch(`/api${path}`, {
       method,
@@ -163,4 +175,35 @@ export function repository<T extends { id?: string }>(entity: string) {
   }
 }
 
-export const me = async () => (await request<{ data: User }>('GET', '/_info/me')).data
+export type Action = 'read' | 'create' | 'update' | 'delete'
+export type Me = User & { admin: boolean; aclPrivileges: string[]; permissions: Record<string, Action[]> }
+
+export const me = async () => (await request<{ data: Me }>('GET', '/_info/me')).data
+export const updateMe = (payload: Record<string, unknown>) => request<void>('PATCH', '/_info/me', payload)
+
+/** Uploads a file into an existing media entity. */
+export async function uploadMedia(mediaId: string, file: File): Promise<void> {
+  const dot = file.name.lastIndexOf('.')
+  const extension = dot > 0 ? file.name.slice(dot + 1) : ''
+  const fileName = dot > 0 ? file.name.slice(0, dot) : file.name
+  await refreshIfNeeded()
+  const res = await fetch(
+    `/api/_action/media/${mediaId}/upload?extension=${encodeURIComponent(extension)}&fileName=${encodeURIComponent(fileName)}`,
+    { method: 'POST', headers: { ...(tokens ? { Authorization: `Bearer ${tokens.access}` } : {}), 'Content-Type': file.type }, body: file },
+  )
+  if (!res.ok) {
+    const payload = await res.json().catch(() => ({ errors: [] }))
+    throw new ApiError(res.status, payload.errors ?? [])
+  }
+}
+
+export interface StateInfo {
+  current: string
+  transitions: string[]
+}
+export type OrderStates = Record<'state' | 'paymentState' | 'deliveryState', StateInfo>
+
+export const orderTransitions = async (id: string) =>
+  (await request<{ data: OrderStates }>('GET', `/_action/order/${id}/transitions`)).data
+export const transitionOrder = async (id: string, machine: string, transition: string) =>
+  (await request<{ data: OrderStates }>('POST', `/_action/order/${id}/${machine}/${transition}`)).data

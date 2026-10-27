@@ -84,6 +84,38 @@ export interface paths {
         patch: operations["updateCategory"];
         trace?: never;
     };
+    "/country": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listCountry"];
+        put?: never;
+        post: operations["createCountry"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/country/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getCountry"];
+        put?: never;
+        post?: never;
+        delete: operations["deleteCountry"];
+        options?: never;
+        head?: never;
+        patch: operations["updateCountry"];
+        trace?: never;
+    };
     "/currency": {
         parameters: {
             query?: never;
@@ -114,6 +146,102 @@ export interface paths {
         options?: never;
         head?: never;
         patch: operations["updateCurrency"];
+        trace?: never;
+    };
+    "/customer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listCustomer"];
+        put?: never;
+        post: operations["createCustomer"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/customer-address": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listCustomerAddress"];
+        put?: never;
+        post: operations["createCustomerAddress"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/customer-address/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getCustomerAddress"];
+        put?: never;
+        post?: never;
+        delete: operations["deleteCustomerAddress"];
+        options?: never;
+        head?: never;
+        patch: operations["updateCustomerAddress"];
+        trace?: never;
+    };
+    "/customer-group": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listCustomerGroup"];
+        put?: never;
+        post: operations["createCustomerGroup"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/customer-group/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getCustomerGroup"];
+        put?: never;
+        post?: never;
+        delete: operations["deleteCustomerGroup"];
+        options?: never;
+        head?: never;
+        patch: operations["updateCustomerGroup"];
+        trace?: never;
+    };
+    "/customer/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getCustomer"];
+        put?: never;
+        post?: never;
+        delete: operations["deleteCustomer"];
+        options?: never;
+        head?: never;
+        patch: operations["updateCustomer"];
         trace?: never;
     };
     "/integration": {
@@ -180,6 +308,38 @@ export interface paths {
         patch: operations["updateLanguage"];
         trace?: never;
     };
+    "/media": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listMedia"];
+        put?: never;
+        post: operations["createMedia"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/media/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getMedia"];
+        put?: never;
+        post?: never;
+        delete: operations["deleteMedia"];
+        options?: never;
+        head?: never;
+        patch: operations["updateMedia"];
+        trace?: never;
+    };
     "/oauth/token": {
         parameters: {
             query?: never;
@@ -194,6 +354,134 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/order": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listOrder"];
+        put?: never;
+        post: operations["createOrder"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/order-address": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listOrderAddress"];
+        put?: never;
+        post: operations["createOrderAddress"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/order-address/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getOrderAddress"];
+        put?: never;
+        post?: never;
+        delete: operations["deleteOrderAddress"];
+        options?: never;
+        head?: never;
+        patch: operations["updateOrderAddress"];
+        trace?: never;
+    };
+    "/order-line-item": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listOrderLineItem"];
+        put?: never;
+        post: operations["createOrderLineItem"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/order-line-item/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getOrderLineItem"];
+        put?: never;
+        post?: never;
+        delete: operations["deleteOrderLineItem"];
+        options?: never;
+        head?: never;
+        patch: operations["updateOrderLineItem"];
+        trace?: never;
+    };
+    "/order/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getOrder"];
+        put?: never;
+        post?: never;
+        delete: operations["deleteOrder"];
+        options?: never;
+        head?: never;
+        patch: operations["updateOrder"];
+        trace?: never;
+    };
+    "/payment-method": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listPaymentMethod"];
+        put?: never;
+        post: operations["createPaymentMethod"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/payment-method/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPaymentMethod"];
+        put?: never;
+        post?: never;
+        delete: operations["deletePaymentMethod"];
+        options?: never;
+        head?: never;
+        patch: operations["updatePaymentMethod"];
         trace?: never;
     };
     "/product": {
@@ -242,6 +530,38 @@ export interface paths {
         options?: never;
         head?: never;
         patch: operations["updateProductManufacturer"];
+        trace?: never;
+    };
+    "/product-media": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listProductMedia"];
+        put?: never;
+        post: operations["createProductMedia"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/product-media/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getProductMedia"];
+        put?: never;
+        post?: never;
+        delete: operations["deleteProductMedia"];
+        options?: never;
+        head?: never;
+        patch: operations["updateProductMedia"];
         trace?: never;
     };
     "/product/{id}": {
@@ -324,6 +644,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/search/country": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["searchCountry"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/search/currency": {
         parameters: {
             query?: never;
@@ -334,6 +670,54 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["searchCurrency"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/search/customer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["searchCustomer"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/search/customer-address": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["searchCustomerAddress"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/search/customer-group": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["searchCustomerGroup"];
         delete?: never;
         options?: never;
         head?: never;
@@ -372,6 +756,86 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/search/media": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["searchMedia"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/search/order": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["searchOrder"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/search/order-address": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["searchOrderAddress"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/search/order-line-item": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["searchOrderLineItem"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/search/payment-method": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["searchPaymentMethod"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/search/product": {
         parameters: {
             query?: never;
@@ -404,6 +868,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/search/product-media": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["searchProductMedia"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/search/sales-channel": {
         parameters: {
             query?: never;
@@ -414,6 +894,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["searchSalesChannel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/search/shipping-method": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["searchShippingMethod"];
         delete?: never;
         options?: never;
         head?: never;
@@ -450,6 +946,38 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/shipping-method": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listShippingMethod"];
+        put?: never;
+        post: operations["createShippingMethod"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/shipping-method/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getShippingMethod"];
+        put?: never;
+        post?: never;
+        delete: operations["deleteShippingMethod"];
+        options?: never;
+        head?: never;
+        patch: operations["updateShippingMethod"];
         trace?: never;
     };
     "/tax": {
@@ -525,6 +1053,7 @@ export interface components {
             readonly createdAt?: string;
             description?: string;
             id?: string;
+            integrations?: components["schemas"]["Integration"][];
             name: string;
             privileges?: {
                 [key: string]: unknown;
@@ -566,6 +1095,21 @@ export interface components {
             /** Format: date-time */
             readonly updatedAt?: string;
             visible?: boolean;
+        };
+        Country: {
+            active?: boolean;
+            /** Format: date-time */
+            readonly createdAt?: string;
+            id?: string;
+            iso: string;
+            iso3?: string;
+            name: string;
+            position?: number;
+            readonly translated?: {
+                name?: string;
+            };
+            /** Format: date-time */
+            readonly updatedAt?: string;
         };
         Criteria: {
             aggregations?: {
@@ -612,6 +1156,72 @@ export interface components {
             /** Format: date-time */
             readonly updatedAt?: string;
         };
+        Customer: {
+            active?: boolean;
+            addresses?: components["schemas"]["CustomerAddress"][];
+            /** Format: date-time */
+            birthday?: string;
+            company?: string;
+            /** Format: date-time */
+            readonly createdAt?: string;
+            customerNumber?: string;
+            defaultBillingAddress?: components["schemas"]["CustomerAddress"];
+            defaultBillingAddressId?: string;
+            defaultPaymentMethod?: components["schemas"]["PaymentMethod"];
+            defaultPaymentMethodId?: string;
+            defaultShippingAddress?: components["schemas"]["CustomerAddress"];
+            defaultShippingAddressId?: string;
+            email: string;
+            firstName: string;
+            group?: components["schemas"]["CustomerGroup"];
+            groupId: string;
+            guest?: boolean;
+            id?: string;
+            language?: components["schemas"]["Language"];
+            languageId: string;
+            /** Format: date-time */
+            readonly lastLogin?: string;
+            lastName: string;
+            readonly orderCount?: number;
+            orders?: components["schemas"]["Order"][];
+            password?: string;
+            salesChannel?: components["schemas"]["SalesChannel"];
+            salesChannelId: string;
+            title?: string;
+            /** Format: date-time */
+            readonly updatedAt?: string;
+        };
+        CustomerAddress: {
+            additionalAddressLine1?: string;
+            city: string;
+            company?: string;
+            country?: components["schemas"]["Country"];
+            countryId: string;
+            /** Format: date-time */
+            readonly createdAt?: string;
+            customer?: components["schemas"]["Customer"];
+            customerId: string;
+            firstName: string;
+            id?: string;
+            lastName: string;
+            phoneNumber?: string;
+            street: string;
+            /** Format: date-time */
+            readonly updatedAt?: string;
+            zipcode?: string;
+        };
+        CustomerGroup: {
+            /** Format: date-time */
+            readonly createdAt?: string;
+            displayGross?: boolean;
+            id?: string;
+            name: string;
+            readonly translated?: {
+                name?: string;
+            };
+            /** Format: date-time */
+            readonly updatedAt?: string;
+        };
         Errors: {
             errors?: {
                 code?: string;
@@ -625,6 +1235,7 @@ export interface components {
         };
         Integration: {
             accessKey: string;
+            aclRoles?: components["schemas"]["AclRole"][];
             admin?: boolean;
             /** Format: date-time */
             readonly createdAt?: string;
@@ -645,6 +1256,134 @@ export interface components {
             /** Format: date-time */
             readonly updatedAt?: string;
         };
+        Media: {
+            alt?: string;
+            /** Format: date-time */
+            readonly createdAt?: string;
+            customFields?: {
+                [key: string]: unknown;
+            };
+            readonly fileExtension?: string;
+            readonly fileName?: string;
+            readonly fileSize?: number;
+            readonly height?: number;
+            id?: string;
+            readonly mimeType?: string;
+            readonly path?: string;
+            readonly thumbnails?: {
+                [key: string]: unknown;
+            };
+            title?: string;
+            readonly translated?: {
+                alt?: string;
+                customFields?: {
+                    [key: string]: unknown;
+                };
+                title?: string;
+            };
+            /** Format: date-time */
+            readonly updatedAt?: string;
+            /** Format: date-time */
+            readonly uploadedAt?: string;
+            readonly url?: string;
+            readonly width?: number;
+        };
+        Order: {
+            addresses?: components["schemas"]["OrderAddress"][];
+            amountNet?: number;
+            amountTotal?: number;
+            billingAddress?: components["schemas"]["OrderAddress"];
+            billingAddressId?: string;
+            /** Format: date-time */
+            readonly createdAt?: string;
+            currency?: components["schemas"]["Currency"];
+            currencyFactor?: number;
+            currencyId: string;
+            customer?: components["schemas"]["Customer"];
+            customerComment?: string;
+            customerCompany?: string;
+            customerEmail: string;
+            customerFirstName: string;
+            customerId?: string;
+            customerLastName: string;
+            customerNumber?: string;
+            readonly deliveryState?: string;
+            id?: string;
+            language?: components["schemas"]["Language"];
+            languageId: string;
+            lineItems?: components["schemas"]["OrderLineItem"][];
+            /** Format: date-time */
+            orderDateTime?: string;
+            orderNumber?: string;
+            paymentMethod?: components["schemas"]["PaymentMethod"];
+            paymentMethodId?: string;
+            readonly paymentState?: string;
+            positionPrice?: number;
+            salesChannel?: components["schemas"]["SalesChannel"];
+            salesChannelId: string;
+            shippingAddress?: components["schemas"]["OrderAddress"];
+            shippingAddressId?: string;
+            shippingMethod?: components["schemas"]["ShippingMethod"];
+            shippingMethodId?: string;
+            shippingTotal?: number;
+            readonly state?: string;
+            taxStatus?: string;
+            /** Format: date-time */
+            readonly updatedAt?: string;
+        };
+        OrderAddress: {
+            city: string;
+            company?: string;
+            country?: components["schemas"]["Country"];
+            countryId: string;
+            /** Format: date-time */
+            readonly createdAt?: string;
+            firstName: string;
+            id?: string;
+            lastName: string;
+            orderId: string;
+            phoneNumber?: string;
+            street: string;
+            /** Format: date-time */
+            readonly updatedAt?: string;
+            zipcode?: string;
+        };
+        OrderLineItem: {
+            /** Format: date-time */
+            readonly createdAt?: string;
+            id?: string;
+            label: string;
+            orderId: string;
+            payload?: {
+                [key: string]: unknown;
+            };
+            position?: number;
+            product?: components["schemas"]["Product"];
+            productId?: string;
+            quantity: number;
+            taxRate?: number;
+            totalPrice: number;
+            type?: string;
+            unitPrice: number;
+            /** Format: date-time */
+            readonly updatedAt?: string;
+        };
+        PaymentMethod: {
+            active?: boolean;
+            /** Format: date-time */
+            readonly createdAt?: string;
+            description?: string;
+            id?: string;
+            name: string;
+            position?: number;
+            technicalName: string;
+            readonly translated?: {
+                description?: string;
+                name?: string;
+            };
+            /** Format: date-time */
+            readonly updatedAt?: string;
+        };
         Price: {
             currencyId: string;
             gross: number;
@@ -661,6 +1400,8 @@ export interface components {
             categories?: components["schemas"]["Category"][];
             readonly childCount?: number;
             children?: components["schemas"]["Product"][];
+            cover?: components["schemas"]["ProductMedia"];
+            coverId?: string;
             /** Format: date-time */
             readonly createdAt?: string;
             customFields?: {
@@ -678,6 +1419,7 @@ export interface components {
             manufacturerNumber?: string;
             markAsTopseller?: boolean;
             maxPurchase?: number;
+            media?: components["schemas"]["ProductMedia"][];
             metaDescription?: string;
             metaTitle?: string;
             minPurchase?: number;
@@ -717,6 +1459,8 @@ export interface components {
             description?: string;
             id?: string;
             link?: string;
+            media?: components["schemas"]["Media"];
+            mediaId?: string;
             name: string;
             products?: components["schemas"]["Product"][];
             readonly translated?: {
@@ -726,6 +1470,18 @@ export interface components {
                 description?: string;
                 name?: string;
             };
+            /** Format: date-time */
+            readonly updatedAt?: string;
+        };
+        ProductMedia: {
+            /** Format: date-time */
+            readonly createdAt?: string;
+            id?: string;
+            media?: components["schemas"]["Media"];
+            mediaId: string;
+            position?: number;
+            product?: components["schemas"]["Product"];
+            productId: string;
             /** Format: date-time */
             readonly updatedAt?: string;
         };
@@ -752,6 +1508,23 @@ export interface components {
                 name?: string;
             };
             typeId?: string;
+            /** Format: date-time */
+            readonly updatedAt?: string;
+        };
+        ShippingMethod: {
+            active?: boolean;
+            /** Format: date-time */
+            readonly createdAt?: string;
+            description?: string;
+            id?: string;
+            name: string;
+            position?: number;
+            price?: components["schemas"]["Price"][];
+            technicalName: string;
+            readonly translated?: {
+                description?: string;
+                name?: string;
+            };
             /** Format: date-time */
             readonly updatedAt?: string;
         };
@@ -1211,6 +1984,197 @@ export interface operations {
             };
         };
     };
+    listCountry: {
+        parameters: {
+            query?: {
+                limit?: number;
+                page?: number;
+                term?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        aggregations?: Record<string, never>;
+                        data?: components["schemas"]["Country"][];
+                        total?: number;
+                    };
+                };
+            };
+        };
+    };
+    createCountry: {
+        parameters: {
+            query?: {
+                /** @description Return the written entity instead of 204. */
+                _response?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Country"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["Country"];
+                    };
+                };
+            };
+            /** @description Created */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    getCountry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["Country"];
+                    };
+                };
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    deleteCountry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    updateCountry: {
+        parameters: {
+            query?: {
+                /** @description Return the written entity instead of 204. */
+                _response?: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Country"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["Country"];
+                    };
+                };
+            };
+            /** @description Updated */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
     listCurrency: {
         parameters: {
             query?: {
@@ -1372,6 +2336,579 @@ export interface operations {
                 content: {
                     "application/json": {
                         data?: components["schemas"]["Currency"];
+                    };
+                };
+            };
+            /** @description Updated */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    listCustomer: {
+        parameters: {
+            query?: {
+                limit?: number;
+                page?: number;
+                term?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        aggregations?: Record<string, never>;
+                        data?: components["schemas"]["Customer"][];
+                        total?: number;
+                    };
+                };
+            };
+        };
+    };
+    createCustomer: {
+        parameters: {
+            query?: {
+                /** @description Return the written entity instead of 204. */
+                _response?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Customer"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["Customer"];
+                    };
+                };
+            };
+            /** @description Created */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    listCustomerAddress: {
+        parameters: {
+            query?: {
+                limit?: number;
+                page?: number;
+                term?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        aggregations?: Record<string, never>;
+                        data?: components["schemas"]["CustomerAddress"][];
+                        total?: number;
+                    };
+                };
+            };
+        };
+    };
+    createCustomerAddress: {
+        parameters: {
+            query?: {
+                /** @description Return the written entity instead of 204. */
+                _response?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CustomerAddress"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["CustomerAddress"];
+                    };
+                };
+            };
+            /** @description Created */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    getCustomerAddress: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["CustomerAddress"];
+                    };
+                };
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    deleteCustomerAddress: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    updateCustomerAddress: {
+        parameters: {
+            query?: {
+                /** @description Return the written entity instead of 204. */
+                _response?: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CustomerAddress"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["CustomerAddress"];
+                    };
+                };
+            };
+            /** @description Updated */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    listCustomerGroup: {
+        parameters: {
+            query?: {
+                limit?: number;
+                page?: number;
+                term?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        aggregations?: Record<string, never>;
+                        data?: components["schemas"]["CustomerGroup"][];
+                        total?: number;
+                    };
+                };
+            };
+        };
+    };
+    createCustomerGroup: {
+        parameters: {
+            query?: {
+                /** @description Return the written entity instead of 204. */
+                _response?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CustomerGroup"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["CustomerGroup"];
+                    };
+                };
+            };
+            /** @description Created */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    getCustomerGroup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["CustomerGroup"];
+                    };
+                };
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    deleteCustomerGroup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    updateCustomerGroup: {
+        parameters: {
+            query?: {
+                /** @description Return the written entity instead of 204. */
+                _response?: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CustomerGroup"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["CustomerGroup"];
+                    };
+                };
+            };
+            /** @description Updated */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    getCustomer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["Customer"];
+                    };
+                };
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    deleteCustomer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    updateCustomer: {
+        parameters: {
+            query?: {
+                /** @description Return the written entity instead of 204. */
+                _response?: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Customer"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["Customer"];
                     };
                 };
             };
@@ -1784,6 +3321,197 @@ export interface operations {
             };
         };
     };
+    listMedia: {
+        parameters: {
+            query?: {
+                limit?: number;
+                page?: number;
+                term?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        aggregations?: Record<string, never>;
+                        data?: components["schemas"]["Media"][];
+                        total?: number;
+                    };
+                };
+            };
+        };
+    };
+    createMedia: {
+        parameters: {
+            query?: {
+                /** @description Return the written entity instead of 204. */
+                _response?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Media"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["Media"];
+                    };
+                };
+            };
+            /** @description Created */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    getMedia: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["Media"];
+                    };
+                };
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    deleteMedia: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    updateMedia: {
+        parameters: {
+            query?: {
+                /** @description Return the written entity instead of 204. */
+                _response?: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Media"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["Media"];
+                    };
+                };
+            };
+            /** @description Updated */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
     token: {
         parameters: {
             query?: never;
@@ -1808,6 +3536,770 @@ export interface operations {
             };
             /** @description Error */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    listOrder: {
+        parameters: {
+            query?: {
+                limit?: number;
+                page?: number;
+                term?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        aggregations?: Record<string, never>;
+                        data?: components["schemas"]["Order"][];
+                        total?: number;
+                    };
+                };
+            };
+        };
+    };
+    createOrder: {
+        parameters: {
+            query?: {
+                /** @description Return the written entity instead of 204. */
+                _response?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Order"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["Order"];
+                    };
+                };
+            };
+            /** @description Created */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    listOrderAddress: {
+        parameters: {
+            query?: {
+                limit?: number;
+                page?: number;
+                term?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        aggregations?: Record<string, never>;
+                        data?: components["schemas"]["OrderAddress"][];
+                        total?: number;
+                    };
+                };
+            };
+        };
+    };
+    createOrderAddress: {
+        parameters: {
+            query?: {
+                /** @description Return the written entity instead of 204. */
+                _response?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OrderAddress"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["OrderAddress"];
+                    };
+                };
+            };
+            /** @description Created */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    getOrderAddress: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["OrderAddress"];
+                    };
+                };
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    deleteOrderAddress: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    updateOrderAddress: {
+        parameters: {
+            query?: {
+                /** @description Return the written entity instead of 204. */
+                _response?: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OrderAddress"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["OrderAddress"];
+                    };
+                };
+            };
+            /** @description Updated */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    listOrderLineItem: {
+        parameters: {
+            query?: {
+                limit?: number;
+                page?: number;
+                term?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        aggregations?: Record<string, never>;
+                        data?: components["schemas"]["OrderLineItem"][];
+                        total?: number;
+                    };
+                };
+            };
+        };
+    };
+    createOrderLineItem: {
+        parameters: {
+            query?: {
+                /** @description Return the written entity instead of 204. */
+                _response?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OrderLineItem"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["OrderLineItem"];
+                    };
+                };
+            };
+            /** @description Created */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    getOrderLineItem: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["OrderLineItem"];
+                    };
+                };
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    deleteOrderLineItem: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    updateOrderLineItem: {
+        parameters: {
+            query?: {
+                /** @description Return the written entity instead of 204. */
+                _response?: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OrderLineItem"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["OrderLineItem"];
+                    };
+                };
+            };
+            /** @description Updated */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    getOrder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["Order"];
+                    };
+                };
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    deleteOrder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    updateOrder: {
+        parameters: {
+            query?: {
+                /** @description Return the written entity instead of 204. */
+                _response?: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Order"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["Order"];
+                    };
+                };
+            };
+            /** @description Updated */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    listPaymentMethod: {
+        parameters: {
+            query?: {
+                limit?: number;
+                page?: number;
+                term?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        aggregations?: Record<string, never>;
+                        data?: components["schemas"]["PaymentMethod"][];
+                        total?: number;
+                    };
+                };
+            };
+        };
+    };
+    createPaymentMethod: {
+        parameters: {
+            query?: {
+                /** @description Return the written entity instead of 204. */
+                _response?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PaymentMethod"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["PaymentMethod"];
+                    };
+                };
+            };
+            /** @description Created */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    getPaymentMethod: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["PaymentMethod"];
+                    };
+                };
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    deletePaymentMethod: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    updatePaymentMethod: {
+        parameters: {
+            query?: {
+                /** @description Return the written entity instead of 204. */
+                _response?: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PaymentMethod"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["PaymentMethod"];
+                    };
+                };
+            };
+            /** @description Updated */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+            /** @description Error */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2051,6 +4543,197 @@ export interface operations {
                 content: {
                     "application/json": {
                         data?: components["schemas"]["ProductManufacturer"];
+                    };
+                };
+            };
+            /** @description Updated */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    listProductMedia: {
+        parameters: {
+            query?: {
+                limit?: number;
+                page?: number;
+                term?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        aggregations?: Record<string, never>;
+                        data?: components["schemas"]["ProductMedia"][];
+                        total?: number;
+                    };
+                };
+            };
+        };
+    };
+    createProductMedia: {
+        parameters: {
+            query?: {
+                /** @description Return the written entity instead of 204. */
+                _response?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProductMedia"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["ProductMedia"];
+                    };
+                };
+            };
+            /** @description Created */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    getProductMedia: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["ProductMedia"];
+                    };
+                };
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    deleteProductMedia: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    updateProductMedia: {
+        parameters: {
+            query?: {
+                /** @description Return the written entity instead of 204. */
+                _response?: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProductMedia"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["ProductMedia"];
                     };
                 };
             };
@@ -2464,6 +5147,43 @@ export interface operations {
             };
         };
     };
+    searchCountry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Criteria"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        aggregations?: Record<string, never>;
+                        data?: components["schemas"]["Country"][];
+                        total?: number;
+                    };
+                };
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
     searchCurrency: {
         parameters: {
             query?: never;
@@ -2486,6 +5206,117 @@ export interface operations {
                     "application/json": {
                         aggregations?: Record<string, never>;
                         data?: components["schemas"]["Currency"][];
+                        total?: number;
+                    };
+                };
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    searchCustomer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Criteria"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        aggregations?: Record<string, never>;
+                        data?: components["schemas"]["Customer"][];
+                        total?: number;
+                    };
+                };
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    searchCustomerAddress: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Criteria"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        aggregations?: Record<string, never>;
+                        data?: components["schemas"]["CustomerAddress"][];
+                        total?: number;
+                    };
+                };
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    searchCustomerGroup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Criteria"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        aggregations?: Record<string, never>;
+                        data?: components["schemas"]["CustomerGroup"][];
                         total?: number;
                     };
                 };
@@ -2575,6 +5406,191 @@ export interface operations {
             };
         };
     };
+    searchMedia: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Criteria"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        aggregations?: Record<string, never>;
+                        data?: components["schemas"]["Media"][];
+                        total?: number;
+                    };
+                };
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    searchOrder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Criteria"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        aggregations?: Record<string, never>;
+                        data?: components["schemas"]["Order"][];
+                        total?: number;
+                    };
+                };
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    searchOrderAddress: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Criteria"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        aggregations?: Record<string, never>;
+                        data?: components["schemas"]["OrderAddress"][];
+                        total?: number;
+                    };
+                };
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    searchOrderLineItem: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Criteria"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        aggregations?: Record<string, never>;
+                        data?: components["schemas"]["OrderLineItem"][];
+                        total?: number;
+                    };
+                };
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    searchPaymentMethod: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Criteria"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        aggregations?: Record<string, never>;
+                        data?: components["schemas"]["PaymentMethod"][];
+                        total?: number;
+                    };
+                };
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
     searchProduct: {
         parameters: {
             query?: never;
@@ -2649,6 +5665,43 @@ export interface operations {
             };
         };
     };
+    searchProductMedia: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Criteria"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        aggregations?: Record<string, never>;
+                        data?: components["schemas"]["ProductMedia"][];
+                        total?: number;
+                    };
+                };
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
     searchSalesChannel: {
         parameters: {
             query?: never;
@@ -2671,6 +5724,43 @@ export interface operations {
                     "application/json": {
                         aggregations?: Record<string, never>;
                         data?: components["schemas"]["SalesChannel"][];
+                        total?: number;
+                    };
+                };
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    searchShippingMethod: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Criteria"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        aggregations?: Record<string, never>;
+                        data?: components["schemas"]["ShippingMethod"][];
                         total?: number;
                     };
                 };
@@ -2751,6 +5841,197 @@ export interface operations {
             };
             /** @description Error */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    listShippingMethod: {
+        parameters: {
+            query?: {
+                limit?: number;
+                page?: number;
+                term?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        aggregations?: Record<string, never>;
+                        data?: components["schemas"]["ShippingMethod"][];
+                        total?: number;
+                    };
+                };
+            };
+        };
+    };
+    createShippingMethod: {
+        parameters: {
+            query?: {
+                /** @description Return the written entity instead of 204. */
+                _response?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ShippingMethod"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["ShippingMethod"];
+                    };
+                };
+            };
+            /** @description Created */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    getShippingMethod: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["ShippingMethod"];
+                    };
+                };
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    deleteShippingMethod: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    updateShippingMethod: {
+        parameters: {
+            query?: {
+                /** @description Return the written entity instead of 204. */
+                _response?: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ShippingMethod"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["ShippingMethod"];
+                    };
+                };
+            };
+            /** @description Updated */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+            /** @description Error */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

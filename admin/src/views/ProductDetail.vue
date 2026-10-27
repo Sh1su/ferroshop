@@ -21,7 +21,12 @@ import {
   type Product,
   type ProductManufacturer,
   type Tax,
+  type ProductMedia,
+  uploadMedia,
+  type Media,
 } from '../api/client'
+import { can } from '../api/session'
+import MediaThumb from '../components/MediaThumb.vue'
 import { CURRENCY_DEFAULT } from '../api/defaults'
 
 const props = defineProps<{ id?: string }>()
@@ -40,6 +45,16 @@ const taxes = ref<Tax[]>([])
 const manufacturers = ref<ProductManufacturer[]>([])
 const categories = ref<Category[]>([])
 const children = ref<Product[]>([])
+const images = ref<ProductMedia[]>([])
+const coverId = ref<string | null>(null)
+const uploading = ref(false)
+const imageInput = ref<HTMLInputElement | null>(null)
+
+const DETAIL_ASSOCIATIONS = {
+  categories: {},
+  children: {},
+  media: { associations: { media: {} }, sort: [{ field: 'position', order: 'ASC' }] },
+}
 const parent = ref<Product | null>(null)
 const originalCategoryIds = ref<string[]>([])
 
@@ -105,6 +120,8 @@ function fill(product: Product) {
   form.net = price?.net ?? null
   syncing = false
   originalCategoryIds.value = [...form.categoryIds]
+  images.value = (product.media ?? []) as ProductMedia[]
+  coverId.value = product.coverId ?? null
   children.value = [...(product.children ?? [])].sort((a, b) => a.productNumber.localeCompare(b.productNumber))
 }
 
@@ -120,7 +137,7 @@ async function load() {
     manufacturers.value = manufacturerResult.data
     categories.value = categoryResult.data
     if (props.id) {
-      const product = await products.get(props.id, { associations: { categories: {}, children: {} } })
+      const product = await products.get(props.id, { associations: DETAIL_ASSOCIATIONS })
       parent.value = product.parentId ? await products.get(product.parentId) : null
       fill(product)
     } else {
@@ -165,7 +182,7 @@ async function save() {
     const removed = originalCategoryIds.value.filter((id) => !form.categoryIds.includes(id))
     await products.update(props.id!, payload())
     await Promise.all(removed.map((categoryId) => products.unlink(props.id!, 'categories', categoryId)))
-    fill(await products.get(props.id!, { associations: { categories: {}, children: {} } }))
+    fill(await products.get(props.id!, { associations: DETAIL_ASSOCIATIONS }))
     notice.value = { variant: 'positive', text: t('common.saved') }
   } catch (e) {
     if (e instanceof ApiError) {
@@ -183,6 +200,48 @@ async function save() {
   } finally {
     saving.value = false
   }
+}
+
+async function reloadImages() {
+  const product = await products.get(props.id!, { associations: { media: DETAIL_ASSOCIATIONS.media } })
+  images.value = (product.media ?? []) as ProductMedia[]
+  coverId.value = product.coverId ?? null
+}
+
+/** Uploads files as new media and attaches them; the first image becomes the cover. */
+async function addImages(files: FileList | null) {
+  if (!files?.length || !props.id) return
+  uploading.value = true
+  notice.value = null
+  try {
+    let position = Math.max(0, ...images.value.map((i) => i.position ?? 0))
+    for (const file of Array.from(files)) {
+      const media = await repository<Media>('media').create({ title: file.name.replace(/\.[^.]+$/, '') } as Partial<Media>)
+      await uploadMedia(media.id!, file)
+      const productMediaId = crypto.randomUUID().replace(/-/g, '')
+      await products.update(props.id, {
+        media: [{ id: productMediaId, mediaId: media.id, position: ++position }],
+        ...(coverId.value ? {} : { coverId: productMediaId }),
+      } as unknown as Partial<Product>)
+      coverId.value ??= productMediaId
+    }
+    await reloadImages()
+  } catch (e) {
+    notice.value = { variant: 'critical', text: e instanceof Error ? e.message : t('common.error') }
+  } finally {
+    uploading.value = false
+    if (imageInput.value) imageInput.value.value = ''
+  }
+}
+
+async function setCover(image: ProductMedia) {
+  await products.update(props.id!, { coverId: image.id })
+  coverId.value = image.id!
+}
+
+async function removeImage(image: ProductMedia) {
+  await repository<ProductMedia>('product-media').delete(image.id!)
+  await reloadImages()
 }
 
 async function remove() {
@@ -303,6 +362,24 @@ onMounted(load)
         </div>
       </MtCard>
 
+      <MtCard v-if="!isNew" :title="t('product.images')">
+        <ul v-if="images.length" class="images">
+          <li v-for="image in images" :key="image.id" :class="{ cover: image.id === coverId }">
+            <MediaThumb :media="image.media" :size="400" />
+            <span v-if="image.id === coverId" class="cover-tag">{{ t('product.cover') }}</span>
+            <div class="image-actions">
+              <MtButton v-if="image.id !== coverId" size="x-small" variant="secondary" @click="setCover(image)">{{ t('product.setCover') }}</MtButton>
+              <MtButton size="x-small" variant="critical" ghost @click="removeImage(image)">{{ t('common.delete') }}</MtButton>
+            </div>
+          </li>
+        </ul>
+        <p v-else class="fs-muted">{{ t('product.noImages') }}</p>
+        <template v-if="can('media', 'create')">
+          <input ref="imageInput" type="file" accept="image/*" multiple hidden @change="addImages(($event.target as HTMLInputElement).files)" />
+          <MtButton variant="secondary" :is-loading="uploading" @click="imageInput?.click()">{{ t('product.addImages') }}</MtButton>
+        </template>
+      </MtCard>
+
       <MtCard v-if="children.length" :title="`${t('product.variants')} (${children.length})`">
         <table class="fs-table">
           <thead>
@@ -331,5 +408,10 @@ onMounted(load)
 
 <style scoped>
 .actions { display: flex; gap: 8px; }
+.images { list-style: none; padding: 0; margin: 0 0 16px; display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+.images li { position: relative; }
+.images li.cover :deep(.thumb) { outline: 2px solid var(--fs-accent); outline-offset: 2px; }
+.cover-tag { position: absolute; top: 6px; left: 6px; background: var(--fs-accent); color: #fff; font-size: 11px; font-weight: 600; padding: 2px 6px; border-radius: 4px; }
+.image-actions { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
 form { display: flex; flex-direction: column; }
 </style>

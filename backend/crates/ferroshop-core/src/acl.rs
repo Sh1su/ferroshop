@@ -31,6 +31,30 @@ impl Action {
     }
 }
 
+/// Reference data every logged-in user may read; changing it still needs privileges.
+pub const PUBLIC_READ: &[&str] = &[
+    "language",
+    "currency",
+    "tax",
+    "country",
+    "customer_group",
+    "payment_method",
+    "shipping_method",
+    "sales_channel",
+    "media",
+];
+
+/// Entities that only exist as part of another one share its privileges
+/// (`order:update` covers line items and order addresses).
+pub fn owner(entity: &str) -> &str {
+    match entity {
+        "order_line_item" | "order_address" => "order",
+        "customer_address" => "customer",
+        "product_media" => "product",
+        other => other,
+    }
+}
+
 #[derive(Debug, Clone, Default)]
 pub struct Permissions {
     pub admin: bool,
@@ -43,8 +67,10 @@ impl Permissions {
     }
 
     pub fn allows(&self, entity: &str, action: Action) -> bool {
+        let entity = owner(entity);
         self.admin
             || self.privileges.contains("*")
+            || (action == Action::Read && PUBLIC_READ.contains(&entity))
             || self.privileges.contains(&format!("{entity}:{}", action.as_str()))
     }
 
@@ -107,5 +133,8 @@ mod tests {
         assert!(!p.allows("customer", Action::Read));
         assert!(Permissions::from_rows(false, [json!(["*"])]).allows("customer", Action::Delete));
         assert!(Permissions::full().allows("anything", Action::Create));
+        assert!(p.allows("order_line_item", Action::Read), "owned entities follow their owner");
+        assert!(p.allows("country", Action::Read), "reference data is readable");
+        assert!(!p.allows("country", Action::Update));
     }
 }
