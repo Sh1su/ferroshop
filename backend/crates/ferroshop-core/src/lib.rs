@@ -1,0 +1,24 @@
+//! ferroshop core: entity definitions, criteria and the generic data layer.
+
+pub mod context;
+pub mod criteria;
+pub mod defaults;
+pub mod definition;
+pub mod entities;
+pub mod error;
+pub mod id;
+pub mod password;
+pub mod price;
+pub mod read;
+pub mod schema;
+mod sql;
+pub mod write;
+
+pub use context::Context;
+pub use criteria::Criteria;
+pub use definition::{EntityDefinition, Field, FieldKind};
+pub use error::{Error, Result, WriteError};
+
+pub static MIGRATOR: sqlx::migrate::Migrator = sqlx::migrate!("./migrations");
+
+pub type Db = sqlx::PgPool;

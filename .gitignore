@@ -1,0 +1,5 @@
+/backend/target
+node_modules
+/admin/dist
+.env
+*.log
