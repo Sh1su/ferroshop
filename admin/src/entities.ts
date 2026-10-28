@@ -136,6 +136,28 @@ export const modules: EntityModule[] = [
     titleField: 'translated.name',
   },
   {
+    key: 'cmsPages',
+    entity: 'cms_page',
+    group: 'catalog',
+    columns: [translatedName, { path: 'type', label: 'fields.pageType' }],
+    fields: [
+      { name: 'name', label: 'fields.name', type: 'text', required: true },
+      {
+        name: 'type',
+        label: 'fields.pageType',
+        type: 'select',
+        default: 'landingpage',
+        options: [
+          { value: 'landingpage', label: 'Landing page' },
+          { value: 'product_list', label: 'Listing page' },
+          { value: 'page', label: 'Shop page' },
+        ],
+      },
+    ],
+    defaultSort: 'name',
+    titleField: 'translated.name',
+  },
+  {
     key: 'categories',
     entity: 'category',
     group: 'catalog',
@@ -148,6 +170,7 @@ export const modules: EntityModule[] = [
     fields: [
       { name: 'name', label: 'fields.name', type: 'text', required: true },
       { name: 'parentId', label: 'fields.parent', type: 'select', entity: 'category', optionLabel: 'translated.name' },
+      { name: 'cmsPageId', label: 'fields.cmsPage', type: 'select', entity: 'cms_page', optionLabel: 'translated.name' },
       { name: 'active', label: 'fields.active', type: 'bool' },
       { name: 'visible', label: 'fields.visible', type: 'bool' },
       { name: 'position', label: 'fields.position', type: 'int' },

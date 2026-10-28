@@ -29,7 +29,8 @@ An open-source e-commerce backend written in Rust, modelled on the
 | Store-API: registration (incl. guests), login, profile, password, e-mail, addresses, checkout, order history | ✅ |
 | SEO URLs: generated per sales channel and language, kept on rename, `/store-api/seo-url`, `sw-include-seo-urls` | ✅ |
 | Properties & variants: property groups/options, variant generator, configurator, find-variant, property filters | ✅ |
-| Store-API: CMS pages, password recovery, mails; Shopware Frontends end-to-end | next |
+| Shopping experiences: CMS pages, default listing page, `/store-api/cms/{id}`, `cmsPage` on categories | ✅ |
+| Visual layout editor, password recovery, mails; Shopware Frontends end-to-end | next |
 
 ## Quick start
 
@@ -119,6 +120,13 @@ Product pages answer with Shopware's `configurator` (options flagged `combinable
 `sortedProperties`; `/store-api/product/{id}/find-variant` maps chosen options to a variant, and
 listings take `properties=<id>|<id>` (OR within a group, AND across groups) with a
 `properties` aggregation of all filterable groups.
+
+Shopping experiences use Shopware's CMS model (page → sections → blocks → slots, slot config
+translated). `/store-api/category/{id}` answers with the category's `cmsPage`, falling back to
+the locked default listing page, and resolves slot `data` for `text`, `image`, `image-slider`,
+`image-gallery`, `product-box`, `product-slider` and `product-listing` (listing parameters in the
+request apply). Pages are edited through the Admin-API for now; the Administration assigns
+them to categories.
 
 SEO URLs follow Shopware's default templates (`Shoes/Sneakers/` for categories below the sales
 channel's navigation root, `Boot/SW-10001` for products) and are updated after every Admin-API

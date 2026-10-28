@@ -6,6 +6,7 @@
 mod account;
 mod cart;
 mod catalog;
+mod cms;
 mod context;
 mod guard;
 mod listing;
@@ -43,6 +44,7 @@ pub fn router(state: StoreState) -> Router {
         .route("/search-suggest", post(listing::suggest).get(listing::suggest))
         .route("/category", post(catalog::categories).get(catalog::categories))
         .route("/category/{id}", post(catalog::category).get(catalog::category))
+        .route("/cms/{id}", post(cms::show).get(cms::show))
         .route("/navigation/{active_id}/{root_id}", post(catalog::navigation).get(catalog::navigation))
         .route("/checkout/cart", get(cart::show).delete(cart::clear))
         .route("/checkout/cart/line-item", post(cart::add).patch(cart::update).delete(cart::remove))

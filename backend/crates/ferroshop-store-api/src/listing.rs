@@ -22,7 +22,7 @@ const LISTING_LIMIT: u64 = 24;
 const SUGGEST_LIMIT: u64 = 10;
 
 /// Listing parameters; everything else in the request is read as criteria.
-const LISTING_PARAMS: &[&str] = &[
+pub(crate) const LISTING_PARAMS: &[&str] = &[
     "order",
     "p",
     "page",
@@ -78,7 +78,7 @@ const SORTINGS: &[Sorting] = &[
 ];
 
 /// Listing parameters from the query string, overridden by the JSON body.
-fn params(query: Option<&str>, body: &[u8]) -> Result<Map<String, Value>, ApiError> {
+pub(crate) fn params(query: Option<&str>, body: &[u8]) -> Result<Map<String, Value>, ApiError> {
     let mut out = Map::new();
     if let Some(query) = query {
         let pairs: Vec<(String, String)> = serde_urlencoded::from_str(query)
@@ -151,7 +151,7 @@ async fn listing(
     sc: &SalesChannelContext,
     scope: Scope,
     params: Map<String, Value>,
-) -> Result<Json<Value>, ApiError> {
+) -> Result<Value, ApiError> {
     let mut raw = params.clone();
     for key in LISTING_PARAMS {
         raw.remove(*key);
@@ -267,7 +267,7 @@ async fn listing(
         })
         .collect();
 
-    Ok(Json(json!({
+    Ok(json!({
         "entity": "product",
         "total": result.total,
         "aggregations": result.aggregations,
@@ -278,7 +278,7 @@ async fn listing(
         "currentFilters": current,
         "availableSortings": available,
         "apiAlias": "product_listing",
-    })))
+    }))
 }
 
 /// Turns the raw aggregations into Shopware's listing format: manufacturer entities and a
@@ -330,12 +330,25 @@ pub async fn category_listing(
     let category_id = id::parse(&raw_id).ok_or_else(|| {
         ApiError::from(ferroshop_core::Error::NotFound { entity: "category".into(), id: raw_id.clone() })
     })?;
-    let category_ids = category_tree(&state, category_id).await?;
+    match for_category(&state, &sc, category_id, params(query.as_deref(), &body)?).await? {
+        Some(listing) => Ok(Json(listing)),
+        None => Err(ferroshop_core::Error::NotFound { entity: "category".into(), id: raw_id }.into()),
+    }
+}
+
+/// The listing of an active category and its sub-categories; `None` if the category is hidden.
+pub(crate) async fn for_category(
+    state: &StoreState,
+    sc: &SalesChannelContext,
+    category_id: Uuid,
+    params: Map<String, Value>,
+) -> Result<Option<Value>, ApiError> {
+    let category_ids = category_tree(state, category_id).await?;
     if category_ids.is_empty() {
-        return Err(ferroshop_core::Error::NotFound { entity: "category".into(), id: raw_id }.into());
+        return Ok(None);
     }
     let scope = Scope::Category { navigation_id: id::format(category_id), category_ids };
-    listing(&state, &sc, scope, params(query.as_deref(), &body)?).await
+    Ok(Some(listing(state, sc, scope, params).await?))
 }
 
 fn search_scope(params: &mut Map<String, Value>, suggest: bool) -> Result<Scope, ApiError> {
@@ -357,7 +370,7 @@ async fn run_search(
 ) -> Result<Json<Value>, ApiError> {
     let mut params = params(query.as_deref(), &body)?;
     let scope = search_scope(&mut params, suggest)?;
-    listing(&state, &sc, scope, params).await
+    Ok(Json(listing(&state, &sc, scope, params).await?))
 }
 
 pub async fn search_listing(

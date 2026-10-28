@@ -189,6 +189,21 @@ pub async fn remove(
         return Err(ApiError::BadRequest("you cannot delete your own account".into()));
     }
     permission::require_target(&state.db, &perms, def, &entity_id).await?;
+    if def.name == "cms_page"
+        && let Some(page) = id::parse(&entity_id)
+    {
+        let locked: Option<bool> = sqlx::query_scalar("SELECT locked FROM cms_page WHERE id = $1")
+            .bind(page)
+            .fetch_optional(&state.db)
+            .await?;
+        if locked == Some(true) {
+            return Err(ApiError::Code(
+                StatusCode::CONFLICT,
+                "CONTENT__CMS_PAGE_LOCKED",
+                "the default listing page cannot be deleted".into(),
+            ));
+        }
+    }
     // Variants and sub-categories are deleted along with their parent; their URLs go too.
     let affected = match (def.name, id::parse(&entity_id)) {
         ("product" | "category", Some(uuid)) => seo::with_descendants(&state.db, def.table, &[uuid]).await?,

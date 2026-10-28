@@ -9,3 +9,4 @@ pub const LIVE_VERSION: Uuid = uuid!("0fa91ce3e96a4bc2be4bd9ce752c3425");
 pub const SALES_CHANNEL_TYPE_STOREFRONT: Uuid = uuid!("8a243080f92e4c719546314b577cf82b");
 pub const ROOT_CATEGORY: Uuid = uuid!("0191a6f0f4a07c7e9b1c2d3e4f5a6c01");
 pub const TAX_STANDARD: Uuid = uuid!("0191a6f0f4a07c7e9b1c2d3e4f5a6b01");
+pub const CMS_DEFAULT_LISTING_PAGE: Uuid = uuid!("0191a6f0f4a07c7e9b1c2d3e4f5a8001");

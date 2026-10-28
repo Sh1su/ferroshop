@@ -5,7 +5,7 @@ use std::collections::{HashMap, HashSet};
 
 use axum::Json;
 use axum::body::Bytes;
-use axum::extract::{Extension, Path, State};
+use axum::extract::{Extension, Path, RawQuery, State};
 use ferroshop_admin_api::ApiError;
 use ferroshop_core::criteria::Filter;
 use ferroshop_core::read::{self, SearchResult};
@@ -14,7 +14,7 @@ use serde::Deserialize;
 use serde_json::{Value, json};
 use uuid::Uuid;
 
-use crate::{SalesChannelContext, StoreState, guard, pricing, properties};
+use crate::{SalesChannelContext, StoreState, cms, guard, listing, pricing, properties};
 
 /// Default page size for routes that do not define their own.
 const DEFAULT_LIMIT: u64 = 100;
@@ -167,10 +167,27 @@ pub async fn category(
     State(state): State<StoreState>,
     Extension(sc): Extension<SalesChannelContext>,
     Path(raw_id): Path<String>,
+    RawQuery(query): RawQuery,
     body: Bytes,
 ) -> Result<Json<Value>, ApiError> {
-    let category_id = id::format(category_id(&sc, &raw_id)?);
-    Ok(Json(single(&state, &sc, "category", &category_id, guard::criteria(&body)?).await?))
+    let category_uuid = category_id(&sc, &raw_id)?;
+    let category_id = id::format(category_uuid);
+    let mut category = single(&state, &sc, "category", &category_id, guard::criteria(&body)?).await?;
+    // The page needs `cmsPageId` and `type`, which `includes` may have stripped.
+    let raw = single(&state, &sc, "category", &category_id, Criteria::default()).await?;
+    let page = match cms::category_page(&raw) {
+        Some(page_id) => {
+            // Only listing parameters reach the product listing; the rest is the category's criteria.
+            let mut params = listing::params(query.as_deref(), &body)?;
+            params.retain(|key, _| listing::LISTING_PARAMS.contains(&key.as_str()));
+            cms::page(&state, &sc, page_id, Some(category_uuid), &params).await?
+        }
+        None => None,
+    };
+    if category.is_object() {
+        category["cmsPage"] = page.unwrap_or(Value::Null);
+    }
+    Ok(Json(category))
 }
 
 #[derive(Debug, Deserialize)]

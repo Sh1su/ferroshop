@@ -99,7 +99,8 @@
     "users": "Users",
     "roles": "Roles",
     "properties": "Properties",
-    "propertyOptions": "Property values"
+    "propertyOptions": "Property values",
+    "cmsPages": "Layouts"
   },
   "fields": {
     "name": "Name",
@@ -164,7 +165,9 @@
     "filterable": "Filterable",
     "visibleOnProductDetailPage": "Visible on product page",
     "colorHexCode": "Colour (hex)",
-    "propertyGroup": "Property"
+    "propertyGroup": "Property",
+    "cmsPage": "Layout",
+    "pageType": "Type"
   },
   "states": {
     "open": "Open",
@@ -218,7 +221,11 @@
     "integration": "Integrations",
     "property_group": "Properties",
     "property_group_option": "Property values",
-    "seo_url": "SEO URLs"
+    "seo_url": "SEO URLs",
+    "cms_page": "Layouts",
+    "cms_section": "Layout sections",
+    "cms_block": "Layout blocks",
+    "cms_slot": "Layout elements"
   },
   "order": {
     "title": "Order {number}",

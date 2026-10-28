@@ -428,3 +428,17 @@ async fn variants_are_generated_from_options(db: Db) {
     let unknown = api.call(Method::POST, &uri, Some(&token), Some(json!({ "options": ["0".repeat(32)] }))).await;
     assert_eq!(unknown.status, StatusCode::BAD_REQUEST);
 }
+
+#[sqlx::test(migrator = "ferroshop_core::MIGRATOR")]
+async fn the_default_listing_page_cannot_be_deleted(db: Db) {
+    let api = Api::new(db.clone());
+    user(&db, "admin", true).await;
+    let token = api.token("admin").await;
+    let page = id::format(ferroshop_core::defaults::CMS_DEFAULT_LISTING_PAGE);
+    let reply = api.call(Method::DELETE, &format!("/api/cms-page/{page}"), Some(&token), None).await;
+    assert_eq!(reply.status, StatusCode::CONFLICT);
+    assert_eq!(reply.json()["errors"][0]["code"], "CONTENT__CMS_PAGE_LOCKED");
+    let own = create(&db, "cms_page", json!({ "name": "Landing" })).await;
+    let reply = api.call(Method::DELETE, &format!("/api/cms-page/{own}"), Some(&token), None).await;
+    assert_eq!(reply.status, StatusCode::NO_CONTENT);
+}

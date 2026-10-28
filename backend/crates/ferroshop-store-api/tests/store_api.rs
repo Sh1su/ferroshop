@@ -911,3 +911,97 @@ async fn properties_configurator_and_filters(db: Db) {
         ])
     );
 }
+
+fn slots(page: &Value) -> Vec<Value> {
+    page["sections"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .flat_map(|s| s["blocks"].as_array().unwrap().iter())
+        .flat_map(|b| b["slots"].as_array().unwrap().iter())
+        .cloned()
+        .collect()
+}
+
+#[sqlx::test(migrator = "ferroshop_core::MIGRATOR")]
+async fn cms_pages_resolve_their_slots(db: Db) {
+    let store = Store::new(db.clone());
+    let catalog = catalog(&db).await;
+
+    // Categories without a page of their own show the default listing page.
+    let category =
+        store.post(&format!("/store-api/category/{}", catalog.shoes), json!({ "order": "price-desc" })).await;
+    assert_eq!(category.status, StatusCode::OK, "{}", category.body);
+    let page = &category.body["cmsPage"];
+    assert_eq!(page["id"], id::format(defaults::CMS_DEFAULT_LISTING_PAGE));
+    assert_eq!(page["type"], "product_list");
+    assert_eq!(page["sections"][0]["type"], "sidebar");
+    let listing = slots(page).into_iter().find(|s| s["type"] == "product-listing").unwrap();
+    assert_eq!(listing["data"]["listing"]["sorting"], "price-desc");
+    assert_eq!(ids(&listing["data"]["listing"]["elements"]), vec![catalog.boot.clone(), catalog.sneaker.clone()]);
+    assert_eq!(listing["config"]["boxLayout"]["value"], "standard");
+    assert!(listing["fieldConfig"].as_array().unwrap().iter().any(|f| f["name"] == "boxLayout"));
+
+    // A landing page with text, image, product slider and product box.
+    let ctx = Context::default();
+    let media = create(&db, "media", json!({ "title": "Banner", "alt": "Banner" })).await;
+    let hidden_id = create(
+        &db,
+        "product",
+        json!({ "productNumber": "H-1", "name": "Hidden", "stock": 1, "active": false,
+                             "taxId": id::format(defaults::TAX_STANDARD), "price": price(1.0) }),
+    )
+    .await;
+    let slot = |kind: &str, name: &str, config: Value| json!({ "type": kind, "slot": name, "config": config });
+    let block =
+        |position: i64, kind: &str, slots: Vec<Value>| json!({ "position": position, "type": kind, "slots": slots });
+    let landing = create(
+        &db,
+        "cms_page",
+        json!({
+            "name": "Sneaker world",
+            "type": "landingpage",
+            "sections": [{ "position": 0, "blocks": [
+                block(3, "product-box", vec![slot("product-box", "content", json!({ "product": { "source": "static", "value": catalog.boot } }))]),
+                block(0, "text", vec![slot("text", "content", json!({ "content": { "source": "static", "value": "<h1>Fresh kicks</h1>" } }))]),
+                block(1, "image", vec![slot("image", "image", json!({ "media": { "source": "static", "value": media },
+                                                                   "url": { "source": "static", "value": "/sale" } }))]),
+                block(2, "product-slider", vec![slot("product-slider", "productSlider", json!({ "products": {
+                    "source": "static", "value": [catalog.sneaker, hidden_id, catalog.boot] } }))]),
+            ]}],
+        }),
+    )
+    .await;
+    write::write(&db, "category", &json!({ "id": catalog.sneakers, "cmsPageId": landing }), WriteMode::Update, &ctx)
+        .await
+        .unwrap();
+
+    let category = store.post(&format!("/store-api/category/{}", catalog.sneakers), json!({})).await;
+    let page = &category.body["cmsPage"];
+    assert_eq!(page["translated"]["name"], "Sneaker world");
+    let types: Vec<&str> =
+        page["sections"][0]["blocks"].as_array().unwrap().iter().map(|b| b["type"].as_str().unwrap()).collect();
+    assert_eq!(types, ["text", "image", "product-slider", "product-box"], "blocks in position order");
+    let resolved = slots(page);
+    assert_eq!(resolved[0]["data"]["content"], "<h1>Fresh kicks</h1>");
+    assert_eq!(resolved[1]["data"]["media"]["id"], media);
+    assert_eq!(resolved[1]["data"]["url"], "/sale");
+    assert_eq!(
+        ids(&resolved[2]["data"]["products"]),
+        vec![catalog.sneaker.clone(), catalog.boot.clone()],
+        "configured order, hidden left out"
+    );
+    assert_eq!(resolved[2]["data"]["products"][0]["calculatedPrice"]["unitPrice"], 59.5);
+    assert_eq!(resolved[3]["data"]["product"]["id"], catalog.boot);
+
+    // Pages on their own; a listing slot there uses `navigationId`.
+    let direct = store.post(&format!("/store-api/cms/{landing}"), json!({})).await;
+    assert_eq!(direct.status, StatusCode::OK, "{}", direct.body);
+    assert_eq!(slots(&direct.body)[0]["data"]["content"], "<h1>Fresh kicks</h1>");
+    let default = id::format(defaults::CMS_DEFAULT_LISTING_PAGE);
+    let with_nav = store.post(&format!("/store-api/cms/{default}"), json!({ "navigationId": catalog.sneakers })).await;
+    let listing = slots(&with_nav.body).into_iter().find(|s| s["type"] == "product-listing").unwrap();
+    assert_eq!(ids(&listing["data"]["listing"]["elements"]), vec![catalog.sneaker.clone()]);
+    let missing = store.post(&format!("/store-api/cms/{}", "0".repeat(32)), json!({})).await;
+    assert_eq!(missing.status, StatusCode::NOT_FOUND);
+}

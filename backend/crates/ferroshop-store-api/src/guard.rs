@@ -27,6 +27,10 @@ const PUBLIC: &[&str] = &[
     "seo_url",
     "property_group",
     "property_group_option",
+    "cms_page",
+    "cms_section",
+    "cms_block",
+    "cms_slot",
 ];
 
 /// What a logged-in customer may additionally read, always filtered to their own records.

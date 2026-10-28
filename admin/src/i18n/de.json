@@ -99,7 +99,8 @@
     "users": "Benutzer",
     "roles": "Rollen",
     "properties": "Eigenschaften",
-    "propertyOptions": "Eigenschaftswerte"
+    "propertyOptions": "Eigenschaftswerte",
+    "cmsPages": "Layouts"
   },
   "fields": {
     "name": "Name",
@@ -164,7 +165,9 @@
     "filterable": "Filterbar",
     "visibleOnProductDetailPage": "Auf Produktseite anzeigen",
     "colorHexCode": "Farbe (Hex)",
-    "propertyGroup": "Eigenschaft"
+    "propertyGroup": "Eigenschaft",
+    "cmsPage": "Layout",
+    "pageType": "Typ"
   },
   "states": {
     "open": "Offen",
@@ -218,7 +221,11 @@
     "integration": "Integrationen",
     "property_group": "Eigenschaften",
     "property_group_option": "Eigenschaftswerte",
-    "seo_url": "SEO-URLs"
+    "seo_url": "SEO-URLs",
+    "cms_page": "Layouts",
+    "cms_section": "Layout-Sektionen",
+    "cms_block": "Layout-Blöcke",
+    "cms_slot": "Layout-Elemente"
   },
   "order": {
     "title": "Bestellung {number}",
