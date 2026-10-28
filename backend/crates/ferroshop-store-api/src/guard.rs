@@ -1,0 +1,134 @@
+//! What storefront visitors may read: a fixed set of catalogue entities, and of those only what is
+//! active. Criteria are checked before they reach the data layer, including filters, sorting and
+//! aggregations on associations (`manufacturer.products.customer...` must not reach customers).
+
+use ferroshop_admin_api::ApiError;
+use ferroshop_core::criteria::Filter;
+use ferroshop_core::{Criteria, EntityDefinition, FieldKind, entities};
+use serde_json::Value;
+
+/// Hard upper bound for one Store-API page.
+pub const MAX_LIMIT: u64 = 100;
+
+const PUBLIC: &[&str] = &[
+    "product",
+    "product_manufacturer",
+    "product_media",
+    "media",
+    "category",
+    "tax",
+    "currency",
+    "language",
+    "country",
+    "payment_method",
+    "shipping_method",
+];
+
+pub fn definition(name: &str) -> &'static EntityDefinition {
+    entities::get(name).expect("store-api entity is registered")
+}
+
+fn association_target(def: &EntityDefinition, name: &str) -> Option<&'static EntityDefinition> {
+    def.field(name).and_then(|f| match f.kind {
+        FieldKind::ManyToOne { entity, .. }
+        | FieldKind::OneToMany { entity, .. }
+        | FieldKind::ManyToMany { entity, .. } => entities::get(entity),
+        _ => None,
+    })
+}
+
+fn forbidden(def: &EntityDefinition, name: &str) -> ApiError {
+    ApiError::Forbidden(format!("association `{name}` of `{}` is not available in the Store-API", def.name))
+}
+
+fn filter_paths<'a>(filter: &'a Filter, out: &mut Vec<&'a str>) {
+    match filter {
+        Filter::Equals { field, .. }
+        | Filter::EqualsAny { field, .. }
+        | Filter::Contains { field, .. }
+        | Filter::Prefix { field, .. }
+        | Filter::Suffix { field, .. }
+        | Filter::Range { field, .. } => out.push(field),
+        Filter::Not { queries, .. } | Filter::Multi { queries, .. } => {
+            queries.iter().for_each(|q| filter_paths(q, out));
+        }
+    }
+}
+
+/// Every association a field path passes must lead to a public entity.
+fn check_path(def: &'static EntityDefinition, path: &str) -> Result<(), ApiError> {
+    let mut current = def;
+    let mut segments = path.split('.').peekable();
+    if segments.peek() == Some(&def.name) {
+        segments.next();
+    }
+    for segment in segments {
+        if segment == "translated" {
+            continue;
+        }
+        match association_target(current, segment) {
+            Some(target) if PUBLIC.contains(&target.name) => current = target,
+            Some(_) => return Err(forbidden(current, segment)),
+            // Scalars and unknown fields are left to the SQL compiler.
+            None => break,
+        }
+    }
+    Ok(())
+}
+
+/// Validates a criteria (recursively through associations) against the public entities.
+pub fn check(def: &'static EntityDefinition, criteria: &Criteria) -> Result<(), ApiError> {
+    let mut paths: Vec<&str> = Vec::new();
+    for filter in criteria.filter.iter().chain(&criteria.post_filter) {
+        filter_paths(filter, &mut paths);
+    }
+    paths.extend(criteria.sort.iter().map(|s| s.field.as_str()));
+    paths.extend(criteria.aggregations.iter().map(|a| a.field.as_str()));
+    for path in paths {
+        check_path(def, path)?;
+    }
+    for (name, sub) in criteria.nested_associations() {
+        match association_target(def, &name) {
+            Some(target) if PUBLIC.contains(&target.name) => check(target, &sub)?,
+            Some(_) => return Err(forbidden(def, &name)),
+            None => {
+                return Err(ApiError::BadRequest(format!("association `{name}` does not exist on `{}`", def.name)));
+            }
+        }
+    }
+    Ok(())
+}
+
+fn visibility(def: &EntityDefinition) -> Option<Filter> {
+    match def.name {
+        "product" | "category" | "country" | "payment_method" | "shipping_method" => {
+            Some(Filter::Equals { field: "active".into(), value: Value::Bool(true) })
+        }
+        _ => None,
+    }
+}
+
+/// Adds visibility filters to the criteria and every loaded association. Call after [`check`].
+pub fn restrict(def: &'static EntityDefinition, criteria: &mut Criteria) {
+    criteria.filter.extend(visibility(def));
+    let mut nested = criteria.nested_associations();
+    for (name, sub) in nested.iter_mut() {
+        if let Some(target) = association_target(def, name) {
+            restrict(target, sub);
+        }
+    }
+    criteria.associations = nested;
+}
+
+/// Applies the Store-API page size: `default` when none is given, never more than [`MAX_LIMIT`].
+pub fn limit(criteria: &mut Criteria, default: u64) {
+    criteria.limit = Some(criteria.limit.unwrap_or(default).clamp(1, MAX_LIMIT));
+}
+
+/// Parses a criteria body; empty bodies (GET requests) mean "no criteria".
+pub fn criteria(body: &[u8]) -> Result<Criteria, ApiError> {
+    if body.iter().all(u8::is_ascii_whitespace) {
+        return Ok(Criteria::default());
+    }
+    serde_json::from_slice(body).map_err(|e| ApiError::BadRequest(format!("invalid criteria: {e}")))
+}

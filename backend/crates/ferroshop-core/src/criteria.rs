@@ -27,6 +27,27 @@ impl Criteria {
         Self { ids: Some(ids), ..Default::default() }
     }
 
+    /// Turns `{"manufacturer.media": {}}` into `{"manufacturer": {"associations": {"media": {}}}}`.
+    pub fn nested_associations(&self) -> BTreeMap<String, Criteria> {
+        let mut out: BTreeMap<String, Criteria> = BTreeMap::new();
+        for (name, sub) in &self.associations {
+            let mut parts = name.splitn(2, '.');
+            let head = parts.next().unwrap_or_default().to_string();
+            let entry = out.entry(head).or_default();
+            match parts.next() {
+                Some(rest) => {
+                    entry.associations.insert(rest.to_string(), sub.clone());
+                }
+                None => {
+                    let nested = std::mem::take(&mut entry.associations);
+                    *entry = sub.clone();
+                    entry.associations.extend(nested);
+                }
+            }
+        }
+        out
+    }
+
     pub fn offset(&self) -> u64 {
         match (self.page, self.limit) {
             (Some(page), Some(limit)) if page > 0 => (page - 1) * limit,

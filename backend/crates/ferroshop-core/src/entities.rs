@@ -73,6 +73,10 @@ entity! {
         fk("languageId", "language_id", "language") [REQUIRED],
         fk("currencyId", "currency_id", "currency") [REQUIRED],
         fk("navigationCategoryId", "navigation_category_id", "category"),
+        fk("customerGroupId", "customer_group_id", "customer_group"),
+        fk("countryId", "country_id", "country"),
+        fk("paymentMethodId", "payment_method_id", "payment_method"),
+        fk("shippingMethodId", "shipping_method_id", "shipping_method"),
         bool("active", "active"),
         string("name", "name") [TRANSLATED | REQUIRED | SEARCHABLE],
         json("customFields", "custom_fields") [TRANSLATED],
@@ -81,6 +85,10 @@ entity! {
         many_to_one("language", "language", "languageId"),
         many_to_one("currency", "currency", "currencyId"),
         many_to_one("navigationCategory", "category", "navigationCategoryId"),
+        many_to_one("customerGroup", "customer_group", "customerGroupId"),
+        many_to_one("country", "country", "countryId"),
+        many_to_one("paymentMethod", "payment_method", "paymentMethodId"),
+        many_to_one("shippingMethod", "shipping_method", "shippingMethodId"),
     }
 }
 
@@ -130,6 +138,11 @@ entity! {
         text("metaDescription", "meta_description") [TRANSLATED | INHERITED],
         json("customFields", "custom_fields") [TRANSLATED | INHERITED],
         computed("childCount", "(SELECT count(*) FROM product pc WHERE pc.parent_id = {a}.id)"),
+        // Lowest gross price in the default currency over the product and its variants;
+        // drives price sorting and filtering in Store-API listings.
+        computed("cheapestGross", "(SELECT min((p->>'gross')::numeric) FROM product cp, \
+            jsonb_array_elements(COALESCE(cp.price, (SELECT pp.price FROM product pp WHERE pp.id = cp.parent_id))) p \
+            WHERE (cp.id = {a}.id OR cp.parent_id = {a}.id) AND p->>'currencyId' = 'b7d2554b0ce847cd82f3ac9bd1c0dfca')"),
         datetime("createdAt", "created_at") [READ_ONLY],
         datetime("updatedAt", "updated_at") [READ_ONLY],
         many_to_one("parent", "product", "parentId"),

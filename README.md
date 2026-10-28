@@ -24,7 +24,8 @@ An open-source e-commerce backend written in Rust, modelled on the
 | Administration: login, product list, product detail (translations, prices, variants, categories), de/en | ✅ |
 | Customers, orders (state machines), media (local/S3, thumbnails), roles & permissions | ✅ |
 | Administration: customers, orders, media library, master data, roles, profile | ✅ |
-| Store-API + Shopware Frontends | phase 2 |
+| Store-API: context, products, category listings, search, navigation, master data, calculated prices | ✅ |
+| Store-API: cart, checkout, customer account, SEO URLs, CMS pages; Shopware Frontends end-to-end | next |
 
 ## Quick start
 
@@ -73,13 +74,32 @@ Headers: `sw-language-id` selects the content language, `sw-inheritance: 1` reso
 fields from their parent. The OpenAPI document is at `/api/_info/openapi3.json`; the Administration
 generates its client types from it (`npm run gen:api`).
 
+## Store-API examples
+
+The Store-API needs the sales channel's access key (the default storefront ships with
+`SWSCFERROSHOPDEFAULT00000`). Every response carries a `sw-context-token`; send it back to keep
+the chosen language and currency.
+
+```sh
+H=(-H 'sw-access-key: SWSCFERROSHOPDEFAULT00000' -H 'content-type: application/json')
+
+curl -s localhost:8000/store-api/navigation/main-navigation/main-navigation "${H[@]}" -d '{"depth": 2}'
+curl -s localhost:8000/store-api/product-listing/<categoryId> "${H[@]}" -d '{"order": "price-asc", "limit": 24, "p": 1}'
+curl -s 'localhost:8000/store-api/search?search=shirt' "${H[@]}" -X POST
+curl -si localhost:8000/store-api/context "${H[@]}" -X PATCH -d '{"languageId": "0191a6f0f4a07c7e9b1c2d3e4f5a6b7c"}'
+```
+
+Storefront visitors only see active products, categories, countries, payment and shipping
+methods, and criteria may only reach catalogue entities. Listings also take Shopware's
+`manufacturer`, `min-price`, `max-price` and `no-aggregations` parameters.
+
 ## Layout
 
 ```
 backend/crates/
   ferroshop-core       entity definitions (entity! macro), criteria, SQL compiler, read/write, migrations
   ferroshop-admin-api  axum router for /api: OAuth2, generic entity endpoints, OpenAPI
-  ferroshop-store-api  /store-api (phase 2)
+  ferroshop-store-api  /store-api: sales channel context, catalogue, listings, navigation
   ferroshop-cli        the `ferroshop` binary: serve, migrate, user:create, demo-data
 admin/                 Vue 3 + Vite + TypeScript + Meteor Component Library
 ```
@@ -91,7 +111,7 @@ Adding an entity means writing a migration and an `entity!` block in
 
 ```sh
 cd backend && cargo test     # needs DATABASE_URL; sqlx::test creates a database per test
-                             # crates/*/tests: entity layer, milestone 2 and the Admin-API over HTTP
+                             # crates/*/tests: entity layer, milestone 2, Admin-API and Store-API over HTTP
 ```
 
 ## License

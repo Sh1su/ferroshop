@@ -854,6 +854,22 @@ dependencies = [
 [[package]]
 name = "ferroshop-store-api"
 version = "0.1.0"
+dependencies = [
+ "axum",
+ "ferroshop-admin-api",
+ "ferroshop-core",
+ "hex",
+ "http-body-util",
+ "rand 0.10.3",
+ "rust_decimal",
+ "serde",
+ "serde_json",
+ "serde_urlencoded",
+ "sqlx",
+ "tokio",
+ "tower",
+ "uuid",
+]
 
 [[package]]
 name = "ff"
