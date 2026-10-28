@@ -132,3 +132,8 @@ pub fn criteria(body: &[u8]) -> Result<Criteria, ApiError> {
     }
     serde_json::from_slice(body).map_err(|e| ApiError::BadRequest(format!("invalid criteria: {e}")))
 }
+
+/// Parses a JSON request body into `T`, answering with Shopware's error format on failure.
+pub fn body<T: serde::de::DeserializeOwned>(body: &[u8]) -> Result<T, ApiError> {
+    serde_json::from_slice(body).map_err(|e| ApiError::BadRequest(format!("invalid request body: {e}")))
+}

@@ -75,8 +75,52 @@ fn round(value: Decimal, precision: u32) -> Decimal {
     value.round_dp_with_strategy(precision, RoundingStrategy::MidpointAwayFromZero)
 }
 
-/// Shopware's `calculated_price` for a stored price collection, or `None` without a usable price.
-pub fn calculate(prices: &Value, tax_rate: Decimal, quantity: u32, ctx: &PriceContext) -> Option<Value> {
+/// A price for a quantity in a sales channel context (Shopware's `calculated_price`).
+#[derive(Debug, Clone, PartialEq)]
+pub struct CalculatedPrice {
+    pub unit_price: Decimal,
+    pub quantity: u32,
+    pub total_price: Decimal,
+    pub tax_rate: Decimal,
+    /// Tax contained in (gross) or added to (net) `total_price`.
+    pub tax: Decimal,
+    pub list_price: Option<Decimal>,
+}
+
+impl CalculatedPrice {
+    /// A price from an already converted unit price.
+    pub fn from_unit(unit_price: Decimal, quantity: u32, tax_rate: Decimal, ctx: &PriceContext) -> Self {
+        let total_price = unit_price * Decimal::from(quantity);
+        let rate = tax_rate / Decimal::ONE_HUNDRED;
+        let tax = if ctx.gross { total_price - total_price / (Decimal::ONE + rate) } else { total_price * rate };
+        Self { unit_price, quantity, total_price, tax_rate, tax: round(tax, ctx.precision), list_price: None }
+    }
+
+    pub fn to_json(&self) -> Value {
+        let list_price = self.list_price.filter(|list| *list > self.unit_price).map(|list| {
+            json!({
+                "price": list,
+                "discount": self.unit_price - list,
+                "percentage": round((list - self.unit_price) / list * Decimal::ONE_HUNDRED, 2),
+                "apiAlias": "cart_list_price",
+            })
+        });
+        json!({
+            "unitPrice": self.unit_price,
+            "quantity": self.quantity,
+            "totalPrice": self.total_price,
+            "calculatedTaxes": [{ "tax": self.tax, "taxRate": self.tax_rate, "price": self.total_price, "apiAlias": "cart_tax" }],
+            "taxRules": [{ "taxRate": self.tax_rate, "percentage": 100, "apiAlias": "cart_tax_rule" }],
+            "referencePrice": null,
+            "listPrice": list_price,
+            "regulationPrice": null,
+            "apiAlias": "calculated_price",
+        })
+    }
+}
+
+/// Calculates a stored price collection for a quantity, or `None` without a usable price.
+pub fn compute(prices: &Value, tax_rate: Decimal, quantity: u32, ctx: &PriceContext) -> Option<CalculatedPrice> {
     let prices: Vec<Price> = serde_json::from_value(prices.clone()).ok()?;
     let wanted = crate::id::format(ctx.currency_id);
     let (price, factor) = match prices.iter().find(|p| p.currency_id == wanted) {
@@ -84,29 +128,74 @@ pub fn calculate(prices: &Value, tax_rate: Decimal, quantity: u32, ctx: &PriceCo
         None => (prices.iter().find(|p| p.currency_id == crate::id::format(defaults::CURRENCY))?, ctx.factor),
     };
     let pick = |gross: Decimal, net: Decimal| round(if ctx.gross { gross } else { net } * factor, ctx.precision);
-    let unit = pick(price.gross, price.net);
-    let total = unit * Decimal::from(quantity);
-    let rate = tax_rate / Decimal::ONE_HUNDRED;
-    let tax = round(if ctx.gross { total - total / (Decimal::ONE + rate) } else { total * rate }, ctx.precision);
-    let list_price = price.list_price.as_ref().map(|l| pick(l.gross, l.net)).filter(|list| *list > unit).map(|list| {
+    let mut calculated = CalculatedPrice::from_unit(pick(price.gross, price.net), quantity, tax_rate, ctx);
+    calculated.list_price = price.list_price.as_ref().map(|l| pick(l.gross, l.net));
+    Some(calculated)
+}
+
+/// Shopware's `calculated_price` JSON for a stored price collection.
+pub fn calculate(prices: &Value, tax_rate: Decimal, quantity: u32, ctx: &PriceContext) -> Option<Value> {
+    compute(prices, tax_rate, quantity, ctx).map(|p| p.to_json())
+}
+
+/// Totals of a cart or order (Shopware's `cart_price`).
+#[derive(Debug, Clone, PartialEq)]
+pub struct CartPrice {
+    pub net_price: Decimal,
+    pub total_price: Decimal,
+    pub position_price: Decimal,
+    /// `(tax rate, tax, price the tax applies to)`, ascending by rate.
+    pub taxes: Vec<(Decimal, Decimal, Decimal)>,
+    pub gross: bool,
+}
+
+impl CartPrice {
+    pub fn new(positions: &[&CalculatedPrice], shipping: &[&CalculatedPrice], ctx: &PriceContext) -> Self {
+        let position_price: Decimal = positions.iter().map(|p| p.total_price).sum();
+        let shipping_price: Decimal = shipping.iter().map(|p| p.total_price).sum();
+        let mut by_rate: std::collections::BTreeMap<Decimal, (Decimal, Decimal)> = Default::default();
+        for price in positions.iter().chain(shipping) {
+            let entry = by_rate.entry(price.tax_rate.normalize()).or_default();
+            entry.0 += price.tax;
+            entry.1 += price.total_price;
+        }
+        let taxes: Vec<_> = by_rate.into_iter().map(|(rate, (tax, price))| (rate, tax, price)).collect();
+        let tax_sum: Decimal = taxes.iter().map(|t| t.1).sum();
+        let (net_price, total_price) = if ctx.gross {
+            (position_price + shipping_price - tax_sum, position_price + shipping_price)
+        } else {
+            (position_price + shipping_price, position_price + shipping_price + tax_sum)
+        };
+        Self { net_price, total_price, position_price, taxes, gross: ctx.gross }
+    }
+
+    pub fn to_json(&self) -> Value {
+        let base: Decimal = self.taxes.iter().map(|t| t.2).sum();
+        let rules: Vec<Value> = self
+            .taxes
+            .iter()
+            .map(|(rate, _, price)| {
+                let share =
+                    if base.is_zero() { Decimal::ONE_HUNDRED } else { round(*price / base * Decimal::ONE_HUNDRED, 2) };
+                json!({ "taxRate": rate, "percentage": share, "apiAlias": "cart_tax_rule" })
+            })
+            .collect();
+        let taxes: Vec<Value> = self
+            .taxes
+            .iter()
+            .map(|(rate, tax, price)| json!({ "tax": tax, "taxRate": rate, "price": price, "apiAlias": "cart_tax" }))
+            .collect();
         json!({
-            "price": list,
-            "discount": unit - list,
-            "percentage": round((list - unit) / list * Decimal::ONE_HUNDRED, 2),
-            "apiAlias": "cart_list_price",
+            "netPrice": self.net_price,
+            "totalPrice": self.total_price,
+            "calculatedTaxes": taxes,
+            "taxRules": rules,
+            "positionPrice": self.position_price,
+            "rawTotal": self.total_price,
+            "taxStatus": if self.gross { "gross" } else { "net" },
+            "apiAlias": "cart_price",
         })
-    });
-    Some(json!({
-        "unitPrice": unit,
-        "quantity": quantity,
-        "totalPrice": total,
-        "calculatedTaxes": [{ "tax": tax, "taxRate": tax_rate, "price": total, "apiAlias": "cart_tax" }],
-        "taxRules": [{ "taxRate": tax_rate, "percentage": 100, "apiAlias": "cart_tax_rule" }],
-        "referencePrice": null,
-        "listPrice": list_price,
-        "regulationPrice": null,
-        "apiAlias": "calculated_price",
-    }))
+    }
 }
 
 #[cfg(test)]
@@ -133,6 +222,30 @@ mod tests {
         let chf = PriceContext { currency_id: Uuid::nil(), factor: Decimal::new(105, 2), ..Default::default() };
         assert_eq!(calculate(&prices, rate, 1, &chf).unwrap()["unitPrice"], 12.5);
         assert!(calculate(&json!("nope"), rate, 1, &chf).is_none());
+    }
+
+    #[test]
+    fn cart_totals_group_taxes_by_rate() {
+        let ctx = PriceContext::default();
+        let a = CalculatedPrice::from_unit(Decimal::new(119, 1), 2, Decimal::from(19), &ctx);
+        let b = CalculatedPrice::from_unit(Decimal::new(107, 1), 1, Decimal::from(7), &ctx);
+        let shipping = CalculatedPrice::from_unit(Decimal::new(499, 2), 1, Decimal::from(19), &ctx);
+        let cart = CartPrice::new(&[&a, &b], &[&shipping], &ctx);
+        assert_eq!(cart.position_price, Decimal::new(345, 1));
+        assert_eq!(cart.total_price, Decimal::new(3949, 2));
+        assert_eq!(
+            cart.taxes,
+            vec![
+                (Decimal::from(7), Decimal::new(70, 2), Decimal::new(107, 1)),
+                (Decimal::from(19), Decimal::new(460, 2), Decimal::new(2879, 2)),
+            ]
+        );
+        assert_eq!(cart.net_price, Decimal::new(3419, 2));
+
+        let net = PriceContext { gross: false, ..Default::default() };
+        let line = CalculatedPrice::from_unit(Decimal::from(10), 3, Decimal::from(19), &net);
+        let cart = CartPrice::new(&[&line], &[], &net);
+        assert_eq!((cart.net_price, cart.total_price), (Decimal::from(30), Decimal::new(357, 1)));
     }
 
     #[test]

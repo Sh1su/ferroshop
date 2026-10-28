@@ -3,6 +3,7 @@
 //! Every request names its sales channel with `sw-access-key`; `sw-context-token` identifies the
 //! visitor's context (language, currency, later customer and cart) and is echoed on every response.
 
+mod cart;
 mod catalog;
 mod context;
 mod guard;
@@ -39,6 +40,9 @@ pub fn router(state: StoreState) -> Router {
         .route("/category", post(catalog::categories).get(catalog::categories))
         .route("/category/{id}", post(catalog::category).get(catalog::category))
         .route("/navigation/{active_id}/{root_id}", post(catalog::navigation).get(catalog::navigation))
+        .route("/checkout/cart", get(cart::show).delete(cart::clear))
+        .route("/checkout/cart/line-item", post(cart::add).patch(cart::update).delete(cart::remove))
+        .route("/checkout/cart/line-item/delete", post(cart::remove_post))
         .route("/currency", post(catalog::currencies).get(catalog::currencies))
         .route("/language", post(catalog::languages).get(catalog::languages))
         .route("/country", post(catalog::countries).get(catalog::countries))

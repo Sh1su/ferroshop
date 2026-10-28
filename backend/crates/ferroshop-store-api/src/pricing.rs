@@ -30,7 +30,7 @@ fn collect_tax_ids(value: &Value, out: &mut Vec<String>) {
     }
 }
 
-async fn tax_rates(db: &Db, data: &[Value]) -> Result<HashMap<String, Decimal>, ApiError> {
+pub(crate) async fn tax_rates(db: &Db, data: &[Value]) -> Result<HashMap<String, Decimal>, ApiError> {
     let mut ids = Vec::new();
     data.iter().for_each(|row| collect_tax_ids(row, &mut ids));
     ids.sort();

@@ -25,7 +25,8 @@ An open-source e-commerce backend written in Rust, modelled on the
 | Customers, orders (state machines), media (local/S3, thumbnails), roles & permissions | ✅ |
 | Administration: customers, orders, media library, master data, roles, profile | ✅ |
 | Store-API: context, products, category listings, search, navigation, master data, calculated prices | ✅ |
-| Store-API: cart, checkout, customer account, SEO URLs, CMS pages; Shopware Frontends end-to-end | next |
+| Store-API: cart (line items, purchase rules, closeout stock, shipping costs, tax totals) | ✅ |
+| Store-API: checkout/order, customer account, SEO URLs, CMS pages; Shopware Frontends end-to-end | next |
 
 ## Quick start
 
@@ -87,7 +88,16 @@ curl -s localhost:8000/store-api/navigation/main-navigation/main-navigation "${H
 curl -s localhost:8000/store-api/product-listing/<categoryId> "${H[@]}" -d '{"order": "price-asc", "limit": 24, "p": 1}'
 curl -s 'localhost:8000/store-api/search?search=shirt' "${H[@]}" -X POST
 curl -si localhost:8000/store-api/context "${H[@]}" -X PATCH -d '{"languageId": "0191a6f0f4a07c7e9b1c2d3e4f5a6b7c"}'
+
+T=(-H "sw-context-token: $TOKEN")   # from the sw-context-token response header
+curl -s localhost:8000/store-api/checkout/cart/line-item "${H[@]}" "${T[@]}" \
+  -d '{"items": [{"type": "product", "referencedId": "<productId>", "quantity": 2}]}'
+curl -s localhost:8000/store-api/checkout/cart "${H[@]}" "${T[@]}"
 ```
+
+Carts store only references and quantities and are recalculated on every read; products that
+sold out, were deactivated or changed their purchase rules are adjusted and reported once in
+`errors`.
 
 Storefront visitors only see active products, categories, countries, payment and shipping
 methods, and criteria may only reach catalogue entities. Listings also take Shopware's

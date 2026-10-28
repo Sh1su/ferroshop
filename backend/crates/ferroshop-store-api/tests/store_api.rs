@@ -280,3 +280,141 @@ async fn navigation_tree_follows_depth_and_active_path(db: Db) {
     let payment = store.post("/store-api/payment-method", json!({})).await;
     assert_eq!(payment.body["total"], 3);
 }
+
+#[sqlx::test(migrator = "ferroshop_core::MIGRATOR")]
+async fn cart_line_items_prices_and_shipping(db: Db) {
+    let store = Store::new(db.clone());
+    let catalog = catalog(&db).await;
+
+    let empty = store.send(Method::GET, "/store-api/checkout/cart", None, None).await;
+    assert_eq!(empty.status, StatusCode::OK, "{}", empty.body);
+    assert_eq!(empty.body["apiAlias"], "cart");
+    assert_eq!(empty.body["lineItems"], json!([]));
+    assert_eq!(empty.body["deliveries"], json!([]));
+    assert_eq!(empty.body["price"]["totalPrice"], 0.0);
+    let token = empty.token.unwrap();
+    let cart = |method: Method, uri: &str, body: Option<Value>| {
+        let (store, token, uri) = (&store, token.clone(), uri.to_string());
+        async move { store.send(method, &uri, Some(&token), body).await }
+    };
+
+    let item =
+        |id: &str, quantity: u32| json!({ "items": [{ "type": "product", "referencedId": id, "quantity": quantity }] });
+    let added = cart(Method::POST, "/store-api/checkout/cart/line-item", Some(item(&catalog.boot, 2))).await;
+    assert_eq!(added.status, StatusCode::OK, "{}", added.body);
+    assert_eq!(added.body["token"], token);
+    let line = &added.body["lineItems"][0];
+    assert_eq!(line["id"], catalog.boot);
+    assert_eq!(line["label"], "Boot");
+    assert_eq!(line["price"]["totalPrice"], 238.0);
+    let price = &added.body["price"];
+    assert_eq!(price["positionPrice"], 238.0);
+    assert_eq!(added.body["deliveries"][0]["shippingCosts"]["totalPrice"], 4.99);
+    assert_eq!(added.body["deliveries"][0]["shippingMethod"]["technicalName"], "standard");
+    assert_eq!(price["totalPrice"], 242.99);
+    assert_eq!(price["calculatedTaxes"][0]["tax"], 38.8);
+    assert_eq!(price["netPrice"], 204.19);
+    assert_eq!(added.body["transactions"][0]["amount"]["totalPrice"], 242.99);
+
+    // Adding the same product again stacks; quantities can be changed and items removed.
+    let stacked = cart(Method::POST, "/store-api/checkout/cart/line-item", Some(item(&catalog.boot, 1))).await;
+    assert_eq!(stacked.body["lineItems"][0]["quantity"], 3);
+    let patched = cart(
+        Method::PATCH,
+        "/store-api/checkout/cart/line-item",
+        Some(json!({ "items": [{ "id": catalog.boot, "quantity": 1 }] })),
+    )
+    .await;
+    assert_eq!(patched.body["lineItems"][0]["quantity"], 1);
+    let unknown = cart(
+        Method::PATCH,
+        "/store-api/checkout/cart/line-item",
+        Some(json!({ "items": [{ "id": "nope", "quantity": 1 }] })),
+    )
+    .await;
+    assert_eq!(unknown.status, StatusCode::BAD_REQUEST);
+    assert_eq!(unknown.body["errors"][0]["code"], "CHECKOUT__CART_LINE_ITEM_NOT_FOUND");
+
+    // Variants are buyable with their parent's price; parents with variants are not.
+    let variant = cart(Method::POST, "/store-api/checkout/cart/line-item", Some(item(&catalog.variant, 1))).await;
+    assert_eq!(variant.body["lineItems"][1]["price"]["unitPrice"], 59.5);
+    let parent = cart(Method::POST, "/store-api/checkout/cart/line-item", Some(item(&catalog.sneaker, 1))).await;
+    assert_eq!(parent.body["lineItems"].as_array().unwrap().len(), 2);
+    assert_eq!(parent.body["errors"][format!("product-not-found{}", catalog.sneaker)]["level"], 20);
+    // Errors are reported once; the invalid item was dropped from the stored cart.
+    let again = cart(Method::GET, "/store-api/checkout/cart", None).await;
+    assert_eq!(again.body["errors"], json!([]));
+
+    let other = store.send(Method::GET, "/store-api/checkout/cart", None, None).await;
+    assert_eq!(other.body["lineItems"], json!([]), "carts belong to their context token");
+
+    let removed = cart(Method::DELETE, "/store-api/checkout/cart/line-item?ids[]=", None).await;
+    assert_eq!(removed.status, StatusCode::BAD_REQUEST);
+    let uri = format!("/store-api/checkout/cart/line-item?ids[]={}", catalog.variant);
+    let removed = cart(Method::DELETE, &uri, None).await;
+    assert_eq!(removed.body["lineItems"].as_array().unwrap().len(), 1);
+    let removed =
+        cart(Method::POST, "/store-api/checkout/cart/line-item/delete", Some(json!({ "ids": [catalog.boot] }))).await;
+    assert_eq!(removed.body["lineItems"], json!([]));
+    assert_eq!(removed.body["price"]["totalPrice"], 0.0);
+
+    cart(Method::POST, "/store-api/checkout/cart/line-item", Some(item(&catalog.boot, 1))).await;
+    let cleared = cart(Method::DELETE, "/store-api/checkout/cart", None).await;
+    assert_eq!(cleared.status, StatusCode::NO_CONTENT);
+    assert_eq!(cart(Method::GET, "/store-api/checkout/cart", None).await.body["lineItems"], json!([]));
+
+    let bad = cart(
+        Method::POST,
+        "/store-api/checkout/cart/line-item",
+        Some(json!({ "items": [{ "type": "promotion", "referencedId": "SALE" }, { "referencedId": catalog.boot, "quantity": 0 }] })),
+    )
+    .await;
+    assert_eq!(bad.status, StatusCode::BAD_REQUEST);
+    assert_eq!(bad.body["errors"].as_array().unwrap().len(), 2);
+}
+
+#[sqlx::test(migrator = "ferroshop_core::MIGRATOR")]
+async fn cart_applies_purchase_rules_and_stock(db: Db) {
+    let store = Store::new(db.clone());
+    let tax = id::format(defaults::TAX_STANDARD);
+    let closeout = create(
+        &db,
+        "product",
+        json!({ "productNumber": "C-1", "name": "Last pieces", "stock": 2, "taxId": tax, "price": price(10.0),
+                "active": true, "isCloseout": true, "shippingFree": true }),
+    )
+    .await;
+    let packs = create(
+        &db,
+        "product",
+        json!({ "productNumber": "P-1", "name": "Socks", "stock": 100, "taxId": tax, "price": price(5.0),
+                "active": true, "minPurchase": 2, "purchaseSteps": 2, "maxPurchase": 6, "shippingFree": true }),
+    )
+    .await;
+    let token = store.send(Method::GET, "/store-api/checkout/cart", None, None).await.token.unwrap();
+    let add = |id: &str, quantity: u32| {
+        let body = json!({ "items": [{ "type": "product", "referencedId": id, "quantity": quantity }] });
+        let token = token.clone();
+        let store = &store;
+        async move { store.send(Method::POST, "/store-api/checkout/cart/line-item", Some(&token), Some(body)).await }
+    };
+
+    let limited = add(&closeout, 5).await;
+    assert_eq!(limited.body["lineItems"][0]["quantity"], 2);
+    assert_eq!(limited.body["errors"][format!("product-stock-reached{closeout}")]["level"], 10);
+    // Only shipping-free products: no shipping costs.
+    assert_eq!(limited.body["deliveries"][0]["shippingCosts"]["totalPrice"], 0.0);
+
+    let stepped = add(&packs, 5).await;
+    assert_eq!(stepped.body["lineItems"][1]["quantity"], 4, "rounded down to a purchase step");
+    let capped = add(&packs, 9).await;
+    assert_eq!(capped.body["lineItems"][1]["quantity"], 6, "capped at maxPurchase");
+
+    // Products that sell out or are deactivated leave the cart on the next read.
+    sqlx::query("UPDATE product SET stock = 0 WHERE product_number = 'C-1'").execute(&db).await.unwrap();
+    sqlx::query("UPDATE product SET active = false WHERE product_number = 'P-1'").execute(&db).await.unwrap();
+    let cart = store.send(Method::GET, "/store-api/checkout/cart", Some(&token), None).await;
+    assert_eq!(cart.body["lineItems"], json!([]));
+    assert_eq!(cart.body["errors"][format!("product-out-of-stock{closeout}")]["level"], 20);
+    assert_eq!(cart.body["errors"][format!("product-not-found{packs}")]["level"], 20);
+}
