@@ -33,7 +33,8 @@
     "back": "Zurück",
     "notFound": "Nicht gefunden.",
     "error": "Etwas ist schiefgelaufen.",
-    "empty": "Nichts gefunden."
+    "empty": "Nichts gefunden.",
+    "adminTarget": "Nur Administratoren können Administratoren ändern."
   },
   "product": {
     "list": "Produkte",
@@ -73,7 +74,8 @@
     "checkInput": "Bitte prüfe deine Eingaben.",
     "FRAMEWORK__INVALID_CURRENT_PASSWORD": "Das aktuelle Passwort ist falsch.",
     "CONTENT__MEDIA_ILLEGAL_FILE_TYPE": "Dieser Dateityp ist nicht erlaubt.",
-    "CONTENT__MEDIA_INVALID_FILE": "Die Datei ist kein gültiges Bild."
+    "CONTENT__MEDIA_INVALID_FILE": "Die Datei ist kein gültiges Bild.",
+    "FRAMEWORK__PERMISSION_DENIED": "Dafür fehlen dir die Berechtigungen."
   },
   "modules": {
     "products": "Produkte",

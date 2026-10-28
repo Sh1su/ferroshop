@@ -33,7 +33,8 @@
     "back": "Back",
     "notFound": "Not found.",
     "error": "Something went wrong.",
-    "empty": "Nothing found."
+    "empty": "Nothing found.",
+    "adminTarget": "Only administrators can change administrators."
   },
   "product": {
     "list": "Products",
@@ -73,7 +74,8 @@
     "checkInput": "Please check your input.",
     "FRAMEWORK__INVALID_CURRENT_PASSWORD": "The current password is wrong.",
     "CONTENT__MEDIA_ILLEGAL_FILE_TYPE": "This file type is not allowed.",
-    "CONTENT__MEDIA_INVALID_FILE": "The file is not a valid image."
+    "CONTENT__MEDIA_INVALID_FILE": "The file is not a valid image.",
+    "FRAMEWORK__PERMISSION_DENIED": "You do not have permission to do this."
   },
   "modules": {
     "products": "Products",

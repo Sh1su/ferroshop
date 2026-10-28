@@ -31,6 +31,8 @@ export interface FormField {
   default?: unknown
   /** Only show when editing (e.g. computed values) or only when creating. */
   only?: 'create' | 'edit'
+  /** Only administrators may change it (admin flag, roles). */
+  adminOnly?: boolean
 }
 
 export interface EntityModule {
@@ -303,8 +305,8 @@ export const modules: EntityModule[] = [
         ],
       },
       { name: 'active', label: 'fields.active', type: 'bool' },
-      { name: 'admin', label: 'fields.admin', type: 'bool', default: false },
-      { name: 'aclRoles', label: 'fields.roles', type: 'multi', entity: 'acl_role', optionLabel: 'name' },
+      { name: 'admin', label: 'fields.admin', type: 'bool', default: false, adminOnly: true },
+      { name: 'aclRoles', label: 'fields.roles', type: 'multi', entity: 'acl_role', optionLabel: 'name', adminOnly: true },
     ],
     associations: { aclRoles: {} },
     defaultSort: 'username',

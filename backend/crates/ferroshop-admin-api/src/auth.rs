@@ -90,6 +90,12 @@ async fn issue_refresh_token(state: &AppState, user_id: Uuid) -> Result<String, 
     Ok(token)
 }
 
+/// Ends all other sessions of a user, e.g. after a password change.
+pub(crate) async fn revoke_refresh_tokens(db: &ferroshop_core::Db, user_id: Uuid) -> Result<(), ApiError> {
+    sqlx::query("DELETE FROM refresh_token WHERE user_id = $1").bind(user_id).execute(db).await?;
+    Ok(())
+}
+
 async fn user_response(state: &AppState, user_id: Uuid) -> Result<Json<Value>, ApiError> {
     let access = issue_access_token(&state.keys, Principal { kind: PrincipalKind::User, id: user_id })?;
     let refresh = issue_refresh_token(state, user_id).await?;

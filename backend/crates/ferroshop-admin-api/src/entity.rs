@@ -12,7 +12,7 @@ use serde_json::{Map, Value, json};
 
 use ferroshop_core::acl::{Action, Permissions};
 
-use crate::auth::Principal;
+use crate::auth::{self, Principal};
 use crate::permission;
 use crate::{ApiError, AppState};
 
@@ -158,6 +158,8 @@ pub async fn update(
     let def = permission::definition(&entity)?;
     permission::require(&perms, def.name, Action::Update)?;
     permission::require_write(&perms, def, &payload)?;
+    permission::require_target(&state.db, &perms, def, &entity_id).await?;
+    let changes_password = def.name == "user" && payload.get("password").is_some();
     match payload.as_object_mut() {
         Some(map) => {
             map.insert("id".into(), Value::String(entity_id));
@@ -165,6 +167,9 @@ pub async fn update(
         None => return Err(ApiError::BadRequest("expected a JSON object".into())),
     }
     let entity_id = write::write(&state.db, &entity, &payload, WriteMode::Update, &ctx).await?;
+    if changes_password {
+        auth::revoke_refresh_tokens(&state.db, entity_id).await?;
+    }
     write_response(&state, &entity, entity_id, &ctx, &query).await
 }
 
@@ -181,6 +186,7 @@ pub async fn remove(
     if def.name == "user" && id::parse(&entity_id) == Some(principal.id) {
         return Err(ApiError::BadRequest("you cannot delete your own account".into()));
     }
+    permission::require_target(&state.db, &perms, def, &entity_id).await?;
     write::delete(&state.db, &entity, &[entity_id], &ctx).await?;
     Ok(StatusCode::NO_CONTENT)
 }
@@ -195,9 +201,10 @@ pub async fn remove_mapping(
     let ctx = context(&headers, &principal)?;
     let def = permission::definition(&entity)?;
     permission::require(&perms, def.name, Action::Update)?;
-    if def.name == "user" && association == "aclRoles" && !perms.admin {
+    if matches!(def.name, "user" | "integration") && association == "aclRoles" && !perms.admin {
         return Err(ApiError::Forbidden("only administrators can change roles".into()));
     }
+    permission::require_target(&state.db, &perms, def, &entity_id).await?;
     write::delete_mapping(&state.db, &entity, &entity_id, &association, &reference_id, &ctx).await?;
     Ok(StatusCode::NO_CONTENT)
 }

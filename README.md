@@ -14,7 +14,7 @@ An open-source e-commerce backend written in Rust, modelled on the
   (filters, sorting, associations, aggregations, includes) and error format.
 - Its own clean PostgreSQL schema, a single binary and a Vue 3 Administration.
 
-## Status: milestone 1
+## Status: milestone 2
 
 | Area | State |
 | --- | --- |
@@ -22,7 +22,8 @@ An open-source e-commerce backend written in Rust, modelled on the
 | Admin-API: OAuth2 (password, refresh token, client credentials), `/api/search/{entity}`, CRUD, OpenAPI | ✅ |
 | Entities: product, category, manufacturer, tax, currency, language, sales channel, user, ACL role, integration | ✅ |
 | Administration: login, product list, product detail (translations, prices, variants, categories), de/en | ✅ |
-| Customers, orders, media, master data UI, roles & permissions | milestone 2 |
+| Customers, orders (state machines), media (local/S3, thumbnails), roles & permissions | ✅ |
+| Administration: customers, orders, media library, master data, roles, profile | ✅ |
 | Store-API + Shopware Frontends | phase 2 |
 
 ## Quick start
@@ -90,6 +91,7 @@ Adding an entity means writing a migration and an `entity!` block in
 
 ```sh
 cd backend && cargo test     # needs DATABASE_URL; sqlx::test creates a database per test
+                             # crates/*/tests: entity layer, milestone 2 and the Admin-API over HTTP
 ```
 
 ## License
