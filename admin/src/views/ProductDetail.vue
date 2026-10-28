@@ -17,6 +17,7 @@ import {
   ApiError,
   repository,
   type Category,
+  generateVariants,
   type Price,
   type Product,
   type ProductManufacturer,
@@ -24,6 +25,7 @@ import {
   type ProductMedia,
   uploadMedia,
   type Media,
+  type PropertyGroupOption,
 } from '../api/client'
 import { can } from '../api/session'
 import MediaThumb from '../components/MediaThumb.vue'
@@ -44,6 +46,9 @@ const errors = ref<Record<string, { code: string; detail: string }>>({})
 const taxes = ref<Tax[]>([])
 const manufacturers = ref<ProductManufacturer[]>([])
 const categories = ref<Category[]>([])
+const propertyOptions = ref<PropertyGroupOption[]>([])
+const variantOptionIds = ref<string[]>([])
+const generating = ref(false)
 const children = ref<Product[]>([])
 const images = ref<ProductMedia[]>([])
 const coverId = ref<string | null>(null)
@@ -52,11 +57,13 @@ const imageInput = ref<HTMLInputElement | null>(null)
 
 const DETAIL_ASSOCIATIONS = {
   categories: {},
-  children: {},
+  properties: {},
+  children: { associations: { options: { associations: { group: {} } } } },
   media: { associations: { media: {} }, sort: [{ field: 'position', order: 'ASC' }] },
 }
 const parent = ref<Product | null>(null)
 const originalCategoryIds = ref<string[]>([])
+const originalPropertyIds = ref<string[]>([])
 
 const form = reactive({
   name: '' as string | null,
@@ -70,6 +77,7 @@ const form = reactive({
   gross: null as number | null,
   net: null as number | null,
   categoryIds: [] as string[],
+  propertyIds: [] as string[],
 })
 
 const isVariant = computed(() => parent.value !== null)
@@ -114,12 +122,14 @@ function fill(product: Product) {
     manufacturerId: product.manufacturerId ?? null,
     description: product.description ?? null,
     categoryIds: (product.categories ?? []).map((c) => c.id!),
+    propertyIds: (product.properties ?? []).map((o) => o.id!),
   })
   syncing = true
   form.gross = price?.gross ?? null
   form.net = price?.net ?? null
   syncing = false
   originalCategoryIds.value = [...form.categoryIds]
+  originalPropertyIds.value = [...form.propertyIds]
   images.value = (product.media ?? []) as ProductMedia[]
   coverId.value = product.coverId ?? null
   children.value = [...(product.children ?? [])].sort((a, b) => a.productNumber.localeCompare(b.productNumber))
@@ -128,11 +138,16 @@ function fill(product: Product) {
 async function load() {
   loading.value = true
   try {
-    const [taxResult, manufacturerResult, categoryResult] = await Promise.all([
+    const [taxResult, manufacturerResult, categoryResult, optionResult] = await Promise.all([
       repository<Tax>('tax').search({ sort: [{ field: 'position', order: 'ASC' }] }),
       repository<ProductManufacturer>('product-manufacturer').search({ sort: [{ field: 'name', order: 'ASC' }] }),
       repository<Category>('category').search({ sort: [{ field: 'name', order: 'ASC' }] }),
+      repository<PropertyGroupOption>('property-group-option').search({
+        associations: { group: {} },
+        sort: [{ field: 'group.name', order: 'ASC' }, { field: 'position', order: 'ASC' }, { field: 'name', order: 'ASC' }],
+      }),
     ])
+    propertyOptions.value = optionResult.data
     taxes.value = taxResult.data
     manufacturers.value = manufacturerResult.data
     categories.value = categoryResult.data
@@ -155,6 +170,7 @@ function payload(): Partial<Product> {
   const price: Price[] | null =
     form.gross === null ? null : [{ currencyId: CURRENCY_DEFAULT, gross: form.gross, net: form.net ?? 0, linked: true }]
   const added = form.categoryIds.filter((id) => !originalCategoryIds.value.includes(id))
+  const addedProperties = form.propertyIds.filter((id) => !originalPropertyIds.value.includes(id))
   return {
     name: blank(form.name),
     productNumber: form.productNumber,
@@ -166,7 +182,28 @@ function payload(): Partial<Product> {
     description: blank(form.description),
     ...(price || !isVariant.value ? { price } : { price: null }),
     categories: added.map((id) => ({ id })) as Category[],
+    properties: addedProperties.map((id) => ({ id })) as PropertyGroupOption[],
   } as Partial<Product>
+}
+
+const optionLabel = (option: PropertyGroupOption) => `${option.group?.translated?.name}: ${option.translated?.name}`
+const optionChoices = computed(() => propertyOptions.value.map((o) => ({ id: o.id, label: optionLabel(o) })))
+const variantLabel = (child: Product) =>
+  (child.options ?? []).map((o) => o.translated?.name).filter(Boolean).join(' / ')
+
+async function generate() {
+  generating.value = true
+  notice.value = null
+  try {
+    const created = await generateVariants(props.id!, variantOptionIds.value)
+    variantOptionIds.value = []
+    fill(await products.get(props.id!, { associations: DETAIL_ASSOCIATIONS }))
+    notice.value = { variant: 'positive', text: t('product.variantsGenerated', { count: created.length }) }
+  } catch (e) {
+    notice.value = { variant: 'critical', text: e instanceof ApiError ? e.message : t('common.error') }
+  } finally {
+    generating.value = false
+  }
 }
 
 async function save() {
@@ -181,7 +218,11 @@ async function save() {
     }
     const removed = originalCategoryIds.value.filter((id) => !form.categoryIds.includes(id))
     await products.update(props.id!, payload())
-    await Promise.all(removed.map((categoryId) => products.unlink(props.id!, 'categories', categoryId)))
+    const removedProperties = originalPropertyIds.value.filter((id) => !form.propertyIds.includes(id))
+    await Promise.all([
+      ...removed.map((categoryId) => products.unlink(props.id!, 'categories', categoryId)),
+      ...removedProperties.map((optionId) => products.unlink(props.id!, 'properties', optionId)),
+    ])
     fill(await products.get(props.id!, { associations: DETAIL_ASSOCIATIONS }))
     notice.value = { variant: 'positive', text: t('common.saved') }
   } catch (e) {
@@ -359,6 +400,14 @@ onMounted(load)
             value-property="id"
             enable-multi-selection
           />
+          <MtSelect
+            v-model="form.propertyIds"
+            :label="t('product.properties')"
+            :options="optionChoices"
+            label-property="label"
+            value-property="id"
+            enable-multi-selection
+          />
         </div>
       </MtCard>
 
@@ -380,11 +429,30 @@ onMounted(load)
         </template>
       </MtCard>
 
-      <MtCard v-if="children.length" :title="`${t('product.variants')} (${children.length})`">
-        <table class="fs-table">
+      <MtCard v-if="!isNew && !isVariant" :title="`${t('product.variants')} (${children.length})`">
+        <div v-if="can('product', 'create')" class="generate">
+          <MtSelect
+            v-model="variantOptionIds"
+            :label="t('product.variantOptions')"
+            :options="optionChoices"
+            label-property="label"
+            value-property="id"
+            enable-multi-selection
+          />
+          <MtButton
+            variant="secondary"
+            :is-loading="generating"
+            :disabled="!variantOptionIds.length"
+            @click="generate"
+          >
+            {{ t('product.generateVariants') }}
+          </MtButton>
+        </div>
+        <table v-if="children.length" class="fs-table">
           <thead>
             <tr>
               <th>{{ t('product.productNumber') }}</th>
+              <th>{{ t('product.variantOptions') }}</th>
               <th class="num">{{ t('product.stock') }}</th>
               <th class="num">{{ t('product.price') }}</th>
             </tr>
@@ -394,6 +462,7 @@ onMounted(load)
               <td>
                 <RouterLink :to="{ name: 'product.detail', params: { id: child.id } }">{{ child.productNumber }}</RouterLink>
               </td>
+              <td>{{ variantLabel(child) }}</td>
               <td class="num">{{ child.stock }}</td>
               <td class="num">
                 {{ child.price?.[0] ? n(child.price[0].gross, { style: 'currency', currency: 'EUR' }) : `↳ ${t('product.parent')}` }}
@@ -408,6 +477,7 @@ onMounted(load)
 
 <style scoped>
 .actions { display: flex; gap: 8px; }
+.generate { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: end; margin-bottom: 16px; }
 .images { list-style: none; padding: 0; margin: 0 0 16px; display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
 .images li { position: relative; }
 .images li.cover :deep(.thumb) { outline: 2px solid var(--fs-accent); outline-offset: 2px; }

@@ -44,6 +44,7 @@ pub fn router(state: AppState) -> Router {
         .route("/_info/me", get(info::me).patch(info::update_me))
         .route("/_action/media/{id}/upload", post(actions::upload_media).layer(DefaultBodyLimit::max(MAX_UPLOAD_BYTES)))
         .route("/_action/order/{id}/transitions", get(actions::order_transitions))
+        .route("/_action/product/{id}/generate-variants", post(actions::generate_variants))
         .route("/_action/order/{id}/{machine}/{transition}", post(actions::order_transition))
         .route("/_info/entity-schema.json", get(info::entity_schema))
         .route("/search/{entity}", post(entity::search))

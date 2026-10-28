@@ -98,6 +98,9 @@ pub async fn transition(db: &Db, order_id: Uuid, machine: Machine, name: &str, c
         .bind(order_id)
         .execute(&mut *tx)
         .await?;
+    if machine == Machine::Order {
+        restock(&mut tx, order_id, &current, to).await?;
+    }
     sqlx::query(
         "INSERT INTO audit_log (id, entity, entity_id, action, payload, actor_id) VALUES ($1, 'order', $2, 'state', $3, $4)",
     )
@@ -109,6 +112,33 @@ pub async fn transition(db: &Db, order_id: Uuid, machine: Machine, name: &str, c
     .await?;
     tx.commit().await?;
     Ok(to.to_string())
+}
+
+/// Cancelling an order that booked stock gives it back; reopening it books it again.
+async fn restock(tx: &mut sqlx::PgConnection, order_id: Uuid, from: &str, to: &str) -> Result<()> {
+    let (sign, expected, next) = match (from, to) {
+        (_, "cancelled") => ("+", "booked", "released"),
+        ("cancelled", _) => ("-", "released", "booked"),
+        _ => return Ok(()),
+    };
+    let changed = sqlx::query("UPDATE sales_order SET stock_state = $2 WHERE id = $1 AND stock_state = $3")
+        .bind(order_id)
+        .bind(next)
+        .bind(expected)
+        .execute(&mut *tx)
+        .await?;
+    if changed.rows_affected() == 0 {
+        return Ok(());
+    }
+    sqlx::query(AssertSqlSafe(format!(
+        "UPDATE product p SET stock = p.stock {sign} li.quantity FROM \
+         (SELECT product_id, sum(quantity)::int AS quantity FROM order_line_item \
+          WHERE order_id = $1 AND product_id IS NOT NULL GROUP BY product_id) li WHERE p.id = li.product_id"
+    )))
+    .bind(order_id)
+    .execute(&mut *tx)
+    .await?;
+    Ok(())
 }
 
 #[cfg(test)]

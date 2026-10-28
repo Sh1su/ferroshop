@@ -62,6 +62,9 @@ entity! {
         many_to_one("parent", "category", "parentId"),
         one_to_many("children", "category", "parentId"),
         many_to_many("products", "product", "product_category", "category_id", "product_id"),
+        one_to_many("seoUrls", "seo_url", "foreignKey"),
+        fk("cmsPageId", "cms_page_id", "cms_page"),
+        many_to_one("cmsPage", "cms_page", "cmsPageId"),
     }
 }
 
@@ -73,6 +76,10 @@ entity! {
         fk("languageId", "language_id", "language") [REQUIRED],
         fk("currencyId", "currency_id", "currency") [REQUIRED],
         fk("navigationCategoryId", "navigation_category_id", "category"),
+        fk("customerGroupId", "customer_group_id", "customer_group"),
+        fk("countryId", "country_id", "country"),
+        fk("paymentMethodId", "payment_method_id", "payment_method"),
+        fk("shippingMethodId", "shipping_method_id", "shipping_method"),
         bool("active", "active"),
         string("name", "name") [TRANSLATED | REQUIRED | SEARCHABLE],
         json("customFields", "custom_fields") [TRANSLATED],
@@ -81,6 +88,10 @@ entity! {
         many_to_one("language", "language", "languageId"),
         many_to_one("currency", "currency", "currencyId"),
         many_to_one("navigationCategory", "category", "navigationCategoryId"),
+        many_to_one("customerGroup", "customer_group", "customerGroupId"),
+        many_to_one("country", "country", "countryId"),
+        many_to_one("paymentMethod", "payment_method", "paymentMethodId"),
+        many_to_one("shippingMethod", "shipping_method", "shippingMethodId"),
     }
 }
 
@@ -130,6 +141,11 @@ entity! {
         text("metaDescription", "meta_description") [TRANSLATED | INHERITED],
         json("customFields", "custom_fields") [TRANSLATED | INHERITED],
         computed("childCount", "(SELECT count(*) FROM product pc WHERE pc.parent_id = {a}.id)"),
+        // Lowest gross price in the default currency over the product and its variants;
+        // drives price sorting and filtering in Store-API listings.
+        computed("cheapestGross", "(SELECT min((p->>'gross')::numeric) FROM product cp, \
+            jsonb_array_elements(COALESCE(cp.price, (SELECT pp.price FROM product pp WHERE pp.id = cp.parent_id))) p \
+            WHERE (cp.id = {a}.id OR cp.parent_id = {a}.id) AND p->>'currencyId' = 'b7d2554b0ce847cd82f3ac9bd1c0dfca')"),
         datetime("createdAt", "created_at") [READ_ONLY],
         datetime("updatedAt", "updated_at") [READ_ONLY],
         many_to_one("parent", "product", "parentId"),
@@ -140,6 +156,9 @@ entity! {
         fk("coverId", "cover_id", "product_media"),
         many_to_one("cover", "product_media", "coverId"),
         one_to_many("media", "product_media", "productId"),
+        one_to_many("seoUrls", "seo_url", "foreignKey"),
+        many_to_many("properties", "property_group_option", "product_property", "product_id", "option_id"),
+        many_to_many("options", "property_group_option", "product_option", "product_id", "option_id"),
     }
 }
 
@@ -246,6 +265,7 @@ entity! {
         fk("defaultPaymentMethodId", "default_payment_method_id", "payment_method"),
         fk("defaultBillingAddressId", "default_billing_address_id", "customer_address"),
         fk("defaultShippingAddressId", "default_shipping_address_id", "customer_address"),
+        fk("salutationId", "salutation_id", "salutation"),
         string("title", "title"),
         string("firstName", "first_name") [REQUIRED | SEARCHABLE],
         string("lastName", "last_name") [REQUIRED | SEARCHABLE],
@@ -265,6 +285,7 @@ entity! {
         many_to_one("defaultPaymentMethod", "payment_method", "defaultPaymentMethodId"),
         many_to_one("defaultBillingAddress", "customer_address", "defaultBillingAddressId"),
         many_to_one("defaultShippingAddress", "customer_address", "defaultShippingAddressId"),
+        many_to_one("salutation", "salutation", "salutationId"),
         one_to_many("addresses", "customer_address", "customerId"),
         one_to_many("orders", "order", "customerId"),
     }
@@ -275,6 +296,7 @@ entity! {
         id("id"),
         fk("customerId", "customer_id", "customer") [REQUIRED],
         fk("countryId", "country_id", "country") [REQUIRED],
+        fk("salutationId", "salutation_id", "salutation"),
         string("firstName", "first_name") [REQUIRED | SEARCHABLE],
         string("lastName", "last_name") [REQUIRED | SEARCHABLE],
         string("company", "company"),
@@ -287,6 +309,7 @@ entity! {
         datetime("updatedAt", "updated_at") [READ_ONLY],
         many_to_one("customer", "customer", "customerId"),
         many_to_one("country", "country", "countryId"),
+        many_to_one("salutation", "salutation", "salutationId"),
     }
 }
 
@@ -338,6 +361,7 @@ entity! {
         id("id"),
         fk("orderId", "order_id", "order") [REQUIRED],
         fk("countryId", "country_id", "country") [REQUIRED],
+        fk("salutationId", "salutation_id", "salutation"),
         string("firstName", "first_name") [REQUIRED],
         string("lastName", "last_name") [REQUIRED],
         string("company", "company"),
@@ -348,6 +372,7 @@ entity! {
         datetime("createdAt", "created_at") [READ_ONLY],
         datetime("updatedAt", "updated_at") [READ_ONLY],
         many_to_one("country", "country", "countryId"),
+        many_to_one("salutation", "salutation", "salutationId"),
     }
 }
 
@@ -404,6 +429,138 @@ entity! {
     }
 }
 
+entity! {
+    pub static PROPERTY_GROUP = "property_group" in "property_group" translations "property_group_translation" {
+        id("id"),
+        string("displayType", "display_type"),
+        string("sortingType", "sorting_type"),
+        int("position", "position"),
+        bool("filterable", "filterable"),
+        bool("visibleOnProductDetailPage", "visible_on_product_detail_page"),
+        string("name", "name") [TRANSLATED | REQUIRED | SEARCHABLE],
+        text("description", "description") [TRANSLATED],
+        datetime("createdAt", "created_at") [READ_ONLY],
+        datetime("updatedAt", "updated_at") [READ_ONLY],
+        one_to_many("options", "property_group_option", "groupId"),
+    }
+}
+
+entity! {
+    pub static PROPERTY_GROUP_OPTION = "property_group_option" in "property_group_option"
+        translations "property_group_option_translation" {
+        id("id"),
+        fk("groupId", "group_id", "property_group") [REQUIRED],
+        int("position", "position"),
+        string("colorHexCode", "color_hex_code"),
+        fk("mediaId", "media_id", "media"),
+        string("name", "name") [TRANSLATED | REQUIRED | SEARCHABLE],
+        datetime("createdAt", "created_at") [READ_ONLY],
+        datetime("updatedAt", "updated_at") [READ_ONLY],
+        many_to_one("group", "property_group", "groupId"),
+        many_to_one("media", "media", "mediaId"),
+    }
+}
+
+entity! {
+    pub static CMS_PAGE = "cms_page" in "cms_page" translations "cms_page_translation" {
+        id("id"),
+        string("type", "type"),
+        string("cssClass", "css_class"),
+        bool("locked", "locked") [READ_ONLY],
+        string("name", "name") [TRANSLATED | REQUIRED | SEARCHABLE],
+        datetime("createdAt", "created_at") [READ_ONLY],
+        datetime("updatedAt", "updated_at") [READ_ONLY],
+        one_to_many("sections", "cms_section", "pageId"),
+        one_to_many("categories", "category", "cmsPageId"),
+    }
+}
+
+entity! {
+    pub static CMS_SECTION = "cms_section" in "cms_section" {
+        id("id"),
+        fk("pageId", "page_id", "cms_page") [REQUIRED],
+        int("position", "position"),
+        string("type", "type"),
+        string("sizingMode", "sizing_mode"),
+        string("mobileBehavior", "mobile_behavior"),
+        string("backgroundColor", "background_color"),
+        fk("backgroundMediaId", "background_media_id", "media"),
+        string("cssClass", "css_class"),
+        datetime("createdAt", "created_at") [READ_ONLY],
+        datetime("updatedAt", "updated_at") [READ_ONLY],
+        many_to_one("page", "cms_page", "pageId"),
+        many_to_one("backgroundMedia", "media", "backgroundMediaId"),
+        one_to_many("blocks", "cms_block", "sectionId"),
+    }
+}
+
+entity! {
+    pub static CMS_BLOCK = "cms_block" in "cms_block" {
+        id("id"),
+        fk("sectionId", "section_id", "cms_section") [REQUIRED],
+        int("position", "position"),
+        string("sectionPosition", "section_position"),
+        string("type", "type") [REQUIRED],
+        string("name", "name"),
+        string("marginTop", "margin_top"),
+        string("marginBottom", "margin_bottom"),
+        string("marginLeft", "margin_left"),
+        string("marginRight", "margin_right"),
+        string("backgroundColor", "background_color"),
+        string("cssClass", "css_class"),
+        datetime("createdAt", "created_at") [READ_ONLY],
+        datetime("updatedAt", "updated_at") [READ_ONLY],
+        many_to_one("section", "cms_section", "sectionId"),
+        one_to_many("slots", "cms_slot", "blockId"),
+    }
+}
+
+entity! {
+    pub static CMS_SLOT = "cms_slot" in "cms_slot" translations "cms_slot_translation" {
+        id("id"),
+        fk("blockId", "block_id", "cms_block") [REQUIRED],
+        string("type", "type") [REQUIRED],
+        string("slot", "slot") [REQUIRED],
+        bool("locked", "locked") [READ_ONLY],
+        json("config", "config") [TRANSLATED],
+        datetime("createdAt", "created_at") [READ_ONLY],
+        datetime("updatedAt", "updated_at") [READ_ONLY],
+        many_to_one("block", "cms_block", "blockId"),
+    }
+}
+
+entity! {
+    pub static SALUTATION = "salutation" in "salutation" translations "salutation_translation" {
+        id("id"),
+        string("salutationKey", "salutation_key") [REQUIRED],
+        int("position", "position"),
+        string("displayName", "display_name") [TRANSLATED | REQUIRED | SEARCHABLE],
+        string("letterName", "letter_name") [TRANSLATED],
+        datetime("createdAt", "created_at") [READ_ONLY],
+        datetime("updatedAt", "updated_at") [READ_ONLY],
+    }
+}
+
+entity! {
+    pub static SEO_URL = "seo_url" in "seo_url" {
+        id("id"),
+        fk("salesChannelId", "sales_channel_id", "sales_channel") [REQUIRED],
+        fk("languageId", "language_id", "language") [REQUIRED],
+        // A category or product id, depending on `routeName`; hence no single target entity.
+        fk("foreignKey", "foreign_key", "") [REQUIRED],
+        string("routeName", "route_name") [REQUIRED],
+        string("pathInfo", "path_info") [REQUIRED],
+        string("seoPathInfo", "seo_path_info") [REQUIRED | SEARCHABLE],
+        bool("isCanonical", "is_canonical"),
+        bool("isModified", "is_modified"),
+        bool("isDeleted", "is_deleted"),
+        datetime("createdAt", "created_at") [READ_ONLY],
+        datetime("updatedAt", "updated_at") [READ_ONLY],
+        many_to_one("salesChannel", "sales_channel", "salesChannelId"),
+        many_to_one("language", "language", "languageId"),
+    }
+}
+
 pub static ALL: &[&EntityDefinition] = &[
     &LANGUAGE,
     &CURRENCY,
@@ -426,6 +583,14 @@ pub static ALL: &[&EntityDefinition] = &[
     &ORDER_LINE_ITEM,
     &MEDIA,
     &PRODUCT_MEDIA,
+    &SEO_URL,
+    &PROPERTY_GROUP,
+    &PROPERTY_GROUP_OPTION,
+    &CMS_PAGE,
+    &CMS_SECTION,
+    &CMS_BLOCK,
+    &CMS_SLOT,
+    &SALUTATION,
 ];
 
 /// Looks an entity up by its snake_case or kebab-case name.

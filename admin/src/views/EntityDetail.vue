@@ -16,7 +16,7 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { ApiError, repository } from '../api/client'
 import { CURRENCY_DEFAULT } from '../api/defaults'
-import { can } from '../api/session'
+import { can, canChange, session } from '../api/session'
 import { at, moduleByKey, type FormField } from '../entities'
 
 const props = defineProps<{ module: string; id: string }>()
@@ -36,10 +36,15 @@ const form = reactive<Record<string, unknown>>({})
 const original = ref<Record<string, unknown>>({})
 const options = reactive<Record<string, { value: string; label: string }[]>>({})
 
+const isAdmin = computed(() => session.user?.admin ?? false)
 const fields = computed(() =>
-  config.value.fields.filter((f) => !f.only || (f.only === 'create') === isNew.value),
+  config.value.fields.filter((f) => (!f.only || (f.only === 'create') === isNew.value) && (!f.adminOnly || isAdmin.value)),
 )
-const readOnly = computed(() => !can(config.value.entity, isNew.value ? 'create' : 'update'))
+const readOnly = computed(() =>
+  isNew.value ? !can(config.value.entity, 'create') : !canChange(config.value.entity, original.value),
+)
+// Allowed in general, but this record (an administrator) is reserved for administrators.
+const protectedTarget = computed(() => !isNew.value && can(config.value.entity, 'update') && readOnly.value)
 
 function initial(field: FormField, entity?: Record<string, unknown>): unknown {
   const value = entity?.[field.name]
@@ -158,7 +163,8 @@ async function save() {
       )
       // Errors without a matching form field (e.g. database constraints) are shown verbatim.
       const unmatched = e.errors.find((err) => !fields.value.some((f) => err.source?.pointer === `/${f.name}`))
-      notice.value = { variant: 'critical', text: e.status === 400 && !unmatched ? t('errors.checkInput') : (unmatched?.detail ?? e.message) }
+      const text = unmatched && te(`errors.${unmatched.code}`) ? t(`errors.${unmatched.code}`) : (unmatched?.detail ?? e.message)
+      notice.value = { variant: 'critical', text: e.status === 400 && !unmatched ? t('errors.checkInput') : text }
     } else {
       notice.value = { variant: 'critical', text: t('common.error') }
     }
@@ -185,6 +191,7 @@ watch(() => [props.module, props.id], load, { immediate: true })
         {{ t('common.save') }}
       </MtButton>
     </div>
+    <MtBanner v-if="protectedTarget && !loading" variant="info">{{ t('common.adminTarget') }}</MtBanner>
     <MtBanner v-if="notice" :variant="notice.variant" closable @close="notice = null">{{ notice.text }}</MtBanner>
     <MtLoader v-if="loading" />
     <MtCard v-else :title="t(`modules.${module}`)">

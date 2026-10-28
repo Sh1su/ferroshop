@@ -11,6 +11,8 @@ pub enum ApiError {
     Unauthorized(&'static str),
     Forbidden(String),
     BadRequest(String),
+    /// Any status with a specific Shopware error code, e.g. `CHECKOUT__CART_EMPTY`.
+    Code(StatusCode, &'static str, String),
 }
 
 impl From<Error> for ApiError {
@@ -43,6 +45,7 @@ impl IntoResponse for ApiError {
             Self::Forbidden(detail) => {
                 (StatusCode::FORBIDDEN, vec![entry(StatusCode::FORBIDDEN, "FRAMEWORK__PERMISSION_DENIED", detail)])
             }
+            Self::Code(status, code, detail) => (status, vec![entry(status, code, detail)]),
             Self::BadRequest(detail) => {
                 (StatusCode::BAD_REQUEST, vec![entry(StatusCode::BAD_REQUEST, "FRAMEWORK__INVALID_REQUEST", detail)])
             }

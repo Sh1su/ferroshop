@@ -33,7 +33,8 @@
     "back": "Zurück",
     "notFound": "Nicht gefunden.",
     "error": "Etwas ist schiefgelaufen.",
-    "empty": "Nichts gefunden."
+    "empty": "Nichts gefunden.",
+    "adminTarget": "Nur Administratoren können Administratoren ändern."
   },
   "product": {
     "list": "Produkte",
@@ -61,7 +62,11 @@
     "cover": "Titelbild",
     "setCover": "Als Titelbild",
     "noImages": "Noch keine Bilder.",
-    "addImages": "Bilder hinzufügen"
+    "addImages": "Bilder hinzufügen",
+    "properties": "Eigenschaften",
+    "variantOptions": "Ausprägungen",
+    "generateVariants": "Varianten generieren",
+    "variantsGenerated": "{count} Varianten angelegt."
   },
   "errors": {
     "FRAMEWORK__WRITE_CONSTRAINT_VIOLATION": "Dieses Feld ist ein Pflichtfeld.",
@@ -73,7 +78,8 @@
     "checkInput": "Bitte prüfe deine Eingaben.",
     "FRAMEWORK__INVALID_CURRENT_PASSWORD": "Das aktuelle Passwort ist falsch.",
     "CONTENT__MEDIA_ILLEGAL_FILE_TYPE": "Dieser Dateityp ist nicht erlaubt.",
-    "CONTENT__MEDIA_INVALID_FILE": "Die Datei ist kein gültiges Bild."
+    "CONTENT__MEDIA_INVALID_FILE": "Die Datei ist kein gültiges Bild.",
+    "FRAMEWORK__PERMISSION_DENIED": "Dafür fehlen dir die Berechtigungen."
   },
   "modules": {
     "products": "Produkte",
@@ -91,7 +97,10 @@
     "customerGroups": "Kundengruppen",
     "salesChannels": "Verkaufskanäle",
     "users": "Benutzer",
-    "roles": "Rollen"
+    "roles": "Rollen",
+    "properties": "Eigenschaften",
+    "propertyOptions": "Eigenschaftswerte",
+    "cmsPages": "Layouts"
   },
   "fields": {
     "name": "Name",
@@ -150,7 +159,15 @@
     "street": "Straße",
     "zipcode": "PLZ",
     "city": "Ort",
-    "country": "Land"
+    "country": "Land",
+    "displayType": "Darstellung",
+    "sortingType": "Sortierung",
+    "filterable": "Filterbar",
+    "visibleOnProductDetailPage": "Auf Produktseite anzeigen",
+    "colorHexCode": "Farbe (Hex)",
+    "propertyGroup": "Eigenschaft",
+    "cmsPage": "Layout",
+    "pageType": "Typ"
   },
   "states": {
     "open": "Offen",
@@ -201,7 +218,14 @@
     "sales_channel": "Verkaufskanäle",
     "user": "Benutzer",
     "acl_role": "Rollen",
-    "integration": "Integrationen"
+    "integration": "Integrationen",
+    "property_group": "Eigenschaften",
+    "property_group_option": "Eigenschaftswerte",
+    "seo_url": "SEO-URLs",
+    "cms_page": "Layouts",
+    "cms_section": "Layout-Sektionen",
+    "cms_block": "Layout-Blöcke",
+    "cms_slot": "Layout-Elemente"
   },
   "order": {
     "title": "Bestellung {number}",

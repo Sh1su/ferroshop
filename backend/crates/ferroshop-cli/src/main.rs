@@ -28,7 +28,7 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Command {
-    /// Runs the HTTP server (Admin-API and Administration UI).
+    /// Runs the HTTP server (Admin-API, Store-API and Administration UI).
     Serve {
         #[arg(long, env = "LISTEN", default_value = "0.0.0.0:8000")]
         listen: SocketAddr,
@@ -70,6 +70,9 @@ enum Command {
     /// Fills the shop with demo manufacturers, categories, products, customers and orders.
     #[command(name = "demo-data")]
     DemoData,
+    /// Rebuilds the SEO URLs of all categories and products (keeps hand-edited ones).
+    #[command(name = "seo:generate")]
+    SeoGenerate,
 }
 
 #[tokio::main]
@@ -97,15 +100,17 @@ async fn main() -> anyhow::Result<()> {
             anyhow::ensure!(secret.len() >= 32, "APP_SECRET must be at least 32 characters");
             let admin = ServeDir::new(&admin_dir).fallback(ServeFile::new(format!("{admin_dir}/index.html")));
             let media = MediaStore::from_config(&media_storage).map_err(|e| anyhow::anyhow!(e))?;
+            let store = ferroshop_store_api::StoreState::new(db.clone());
             let state = AppState::new(db, &secret, media);
             let app = Router::new()
                 .merge(ferroshop_admin_api::router(state.clone()))
+                .merge(ferroshop_store_api::router(store))
                 .merge(ferroshop_admin_api::media_router(state))
                 .nest_service("/admin", admin)
                 .layer(CorsLayer::permissive())
                 .layer(TraceLayer::new_for_http());
             let listener = tokio::net::TcpListener::bind(listen).await?;
-            tracing::info!("ferroshop listening on http://{listen} (admin: /admin)");
+            tracing::info!("ferroshop listening on http://{listen} (admin: /admin, store-api: /store-api)");
             axum::serve(listener, app).await?;
         }
         Command::UserCreate { username, email, password, first_name, last_name } => {
@@ -131,7 +136,14 @@ async fn main() -> anyhow::Result<()> {
         }
         Command::DemoData => {
             let count = demo::run(&db).await.map_err(describe)?;
+            ferroshop_core::seo::update(&db, ferroshop_core::seo::Scope::All).await.map_err(describe)?;
             println!("created {count} demo products");
+        }
+        Command::SeoGenerate => {
+            ferroshop_core::seo::update(&db, ferroshop_core::seo::Scope::All).await.map_err(describe)?;
+            let count: i64 =
+                sqlx::query_scalar("SELECT count(*) FROM seo_url WHERE is_canonical").fetch_one(&db).await?;
+            println!("{count} canonical SEO URLs");
         }
     }
     Ok(())

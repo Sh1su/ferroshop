@@ -91,7 +91,7 @@ pub async fn update_me(
     write::write(&state.db, "user", &Value::Object(payload), WriteMode::Update, &ctx).await?;
     if changes_password {
         // Other sessions must log in again after a password change.
-        sqlx::query("DELETE FROM refresh_token WHERE user_id = $1").bind(principal.id).execute(&state.db).await?;
+        crate::auth::revoke_refresh_tokens(&state.db, principal.id).await?;
     }
     Ok(axum::http::StatusCode::NO_CONTENT)
 }

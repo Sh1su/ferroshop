@@ -31,6 +31,8 @@ export interface FormField {
   default?: unknown
   /** Only show when editing (e.g. computed values) or only when creating. */
   only?: 'create' | 'edit'
+  /** Only administrators may change it (admin flag, roles). */
+  adminOnly?: boolean
 }
 
 export interface EntityModule {
@@ -66,6 +68,96 @@ export const modules: EntityModule[] = [
     titleField: 'translated.name',
   },
   {
+    key: 'properties',
+    entity: 'property_group',
+    group: 'catalog',
+    columns: [
+      translatedName,
+      { path: 'displayType', label: 'fields.displayType', hideSmall: true },
+      { path: 'filterable', label: 'fields.filterable', format: 'bool' },
+      { path: 'position', label: 'fields.position', sort: 'position', hideSmall: true },
+    ],
+    fields: [
+      { name: 'name', label: 'fields.name', type: 'text', required: true },
+      { name: 'description', label: 'fields.description', type: 'textarea' },
+      {
+        name: 'displayType',
+        label: 'fields.displayType',
+        type: 'select',
+        default: 'text',
+        options: [
+          { value: 'text', label: 'Text' },
+          { value: 'color', label: 'Color' },
+          { value: 'media', label: 'Media' },
+        ],
+      },
+      {
+        name: 'sortingType',
+        label: 'fields.sortingType',
+        type: 'select',
+        default: 'alphanumeric',
+        options: [
+          { value: 'alphanumeric', label: 'A–Z' },
+          { value: 'position', label: 'Position' },
+        ],
+      },
+      { name: 'position', label: 'fields.position', type: 'int', default: 0 },
+      { name: 'filterable', label: 'fields.filterable', type: 'bool', default: true },
+      { name: 'visibleOnProductDetailPage', label: 'fields.visibleOnProductDetailPage', type: 'bool', default: true },
+    ],
+    defaultSort: 'name',
+    titleField: 'translated.name',
+  },
+  {
+    key: 'propertyOptions',
+    entity: 'property_group_option',
+    group: 'catalog',
+    columns: [
+      translatedName,
+      { path: 'group.translated.name', label: 'fields.propertyGroup' },
+      { path: 'colorHexCode', label: 'fields.colorHexCode', hideSmall: true },
+      { path: 'position', label: 'fields.position', sort: 'position', hideSmall: true },
+    ],
+    fields: [
+      { name: 'name', label: 'fields.name', type: 'text', required: true },
+      {
+        name: 'groupId',
+        label: 'fields.propertyGroup',
+        type: 'select',
+        entity: 'property_group',
+        optionLabel: 'translated.name',
+        required: true,
+      },
+      { name: 'position', label: 'fields.position', type: 'int', default: 0 },
+      { name: 'colorHexCode', label: 'fields.colorHexCode', type: 'text' },
+    ],
+    associations: { group: {} },
+    defaultSort: 'name',
+    titleField: 'translated.name',
+  },
+  {
+    key: 'cmsPages',
+    entity: 'cms_page',
+    group: 'catalog',
+    columns: [translatedName, { path: 'type', label: 'fields.pageType' }],
+    fields: [
+      { name: 'name', label: 'fields.name', type: 'text', required: true },
+      {
+        name: 'type',
+        label: 'fields.pageType',
+        type: 'select',
+        default: 'landingpage',
+        options: [
+          { value: 'landingpage', label: 'Landing page' },
+          { value: 'product_list', label: 'Listing page' },
+          { value: 'page', label: 'Shop page' },
+        ],
+      },
+    ],
+    defaultSort: 'name',
+    titleField: 'translated.name',
+  },
+  {
     key: 'categories',
     entity: 'category',
     group: 'catalog',
@@ -78,6 +170,7 @@ export const modules: EntityModule[] = [
     fields: [
       { name: 'name', label: 'fields.name', type: 'text', required: true },
       { name: 'parentId', label: 'fields.parent', type: 'select', entity: 'category', optionLabel: 'translated.name' },
+      { name: 'cmsPageId', label: 'fields.cmsPage', type: 'select', entity: 'cms_page', optionLabel: 'translated.name' },
       { name: 'active', label: 'fields.active', type: 'bool' },
       { name: 'visible', label: 'fields.visible', type: 'bool' },
       { name: 'position', label: 'fields.position', type: 'int' },
@@ -270,6 +363,10 @@ export const modules: EntityModule[] = [
         entity: 'category',
         optionLabel: 'translated.name',
       },
+      { name: 'customerGroupId', label: 'fields.customerGroup', type: 'select', entity: 'customer_group', optionLabel: 'translated.name' },
+      { name: 'countryId', label: 'fields.country', type: 'select', entity: 'country', optionLabel: 'translated.name' },
+      { name: 'paymentMethodId', label: 'fields.paymentMethod', type: 'select', entity: 'payment_method', optionLabel: 'translated.name' },
+      { name: 'shippingMethodId', label: 'fields.shippingMethod', type: 'select', entity: 'shipping_method', optionLabel: 'translated.name' },
       { name: 'active', label: 'fields.active', type: 'bool' },
     ],
     defaultSort: 'name',
@@ -303,8 +400,8 @@ export const modules: EntityModule[] = [
         ],
       },
       { name: 'active', label: 'fields.active', type: 'bool' },
-      { name: 'admin', label: 'fields.admin', type: 'bool', default: false },
-      { name: 'aclRoles', label: 'fields.roles', type: 'multi', entity: 'acl_role', optionLabel: 'name' },
+      { name: 'admin', label: 'fields.admin', type: 'bool', default: false, adminOnly: true },
+      { name: 'aclRoles', label: 'fields.roles', type: 'multi', entity: 'acl_role', optionLabel: 'name', adminOnly: true },
     ],
     associations: { aclRoles: {} },
     defaultSort: 'username',

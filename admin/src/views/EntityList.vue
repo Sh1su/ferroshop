@@ -4,7 +4,7 @@ import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { repository } from '../api/client'
-import { can } from '../api/session'
+import { can, canChange, session } from '../api/session'
 import StateBadge from '../components/StateBadge.vue'
 import { at, moduleByKey, parseSort, type Column } from '../entities'
 import { useFormat } from '../format'
@@ -150,7 +150,7 @@ const canDelete = computed(() => can(config.value.entity, 'delete'))
                 <template v-else>{{ display(row, column) }}</template>
               </td>
               <td v-if="canDelete" class="num">
-                <MtButton variant="critical" size="x-small" ghost @click="remove(row)">{{ t('common.delete') }}</MtButton>
+                <MtButton v-if="canChange(config.entity, row, 'delete') && row.id !== session.user?.id" variant="critical" size="x-small" ghost @click="remove(row)">{{ t('common.delete') }}</MtButton>
               </td>
             </tr>
           </tbody>

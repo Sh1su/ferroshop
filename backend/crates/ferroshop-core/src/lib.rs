@@ -14,7 +14,9 @@ pub mod password;
 pub mod price;
 pub mod read;
 pub mod schema;
+pub mod seo;
 mod sql;
+pub mod variants;
 pub mod write;
 
 pub use context::Context;

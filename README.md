@@ -14,7 +14,7 @@ An open-source e-commerce backend written in Rust, modelled on the
   (filters, sorting, associations, aggregations, includes) and error format.
 - Its own clean PostgreSQL schema, a single binary and a Vue 3 Administration.
 
-## Status: milestone 1
+## Status: milestone 2
 
 | Area | State |
 | --- | --- |
@@ -22,8 +22,16 @@ An open-source e-commerce backend written in Rust, modelled on the
 | Admin-API: OAuth2 (password, refresh token, client credentials), `/api/search/{entity}`, CRUD, OpenAPI | ✅ |
 | Entities: product, category, manufacturer, tax, currency, language, sales channel, user, ACL role, integration | ✅ |
 | Administration: login, product list, product detail (translations, prices, variants, categories), de/en | ✅ |
-| Customers, orders, media, master data UI, roles & permissions | milestone 2 |
-| Store-API + Shopware Frontends | phase 2 |
+| Customers, orders (state machines), media (local/S3, thumbnails), roles & permissions | ✅ |
+| Administration: customers, orders, media library, master data, roles, profile | ✅ |
+| Store-API: context, products, category listings, search, navigation, master data, calculated prices | ✅ |
+| Store-API: cart (line items, purchase rules, closeout stock, shipping costs, tax totals) | ✅ |
+| Store-API: registration (incl. guests), login, profile, password, e-mail, addresses, checkout, order history | ✅ |
+| SEO URLs: generated per sales channel and language, kept on rename, `/store-api/seo-url`, `sw-include-seo-urls` | ✅ |
+| Properties & variants: property groups/options, variant generator, configurator, find-variant, property filters | ✅ |
+| Shopping experiences: CMS pages, default listing page, `/store-api/cms/{id}`, `cmsPage` on categories | ✅ |
+| Frontends routes: breadcrumbs, salutations, handle-payment, order cancel (restocks), payment method change, `available` | ✅ |
+| Visual layout editor, password recovery and mails, wishlist, reviews, cross-selling; Frontends run end-to-end | next |
 
 ## Quick start
 
@@ -36,7 +44,7 @@ docker compose up -d postgres
 cd backend
 cargo run -- migrate
 cargo run -- user:create admin --email admin@example.com --password shopware1
-cargo run -- demo-data
+cargo run -- demo-data      # also generates SEO URLs
 cargo run -- serve          # http://localhost:8000/api
 
 cd ../admin
@@ -72,13 +80,77 @@ Headers: `sw-language-id` selects the content language, `sw-inheritance: 1` reso
 fields from their parent. The OpenAPI document is at `/api/_info/openapi3.json`; the Administration
 generates its client types from it (`npm run gen:api`).
 
+## Store-API examples
+
+The Store-API needs the sales channel's access key (the default storefront ships with
+`SWSCFERROSHOPDEFAULT00000`). Every response carries a `sw-context-token`; send it back to keep
+the chosen language and currency.
+
+```sh
+H=(-H 'sw-access-key: SWSCFERROSHOPDEFAULT00000' -H 'content-type: application/json')
+
+curl -s localhost:8000/store-api/navigation/main-navigation/main-navigation "${H[@]}" -d '{"depth": 2}'
+curl -s localhost:8000/store-api/product-listing/<categoryId> "${H[@]}" -d '{"order": "price-asc", "limit": 24, "p": 1}'
+curl -s 'localhost:8000/store-api/search?search=shirt' "${H[@]}" -X POST
+curl -si localhost:8000/store-api/context "${H[@]}" -X PATCH -d '{"languageId": "0191a6f0f4a07c7e9b1c2d3e4f5a6b7c"}'
+
+T=(-H "sw-context-token: $TOKEN")   # from the sw-context-token response header
+curl -s localhost:8000/store-api/checkout/cart/line-item "${H[@]}" "${T[@]}" \
+  -d '{"items": [{"type": "product", "referencedId": "<productId>", "quantity": 2}]}'
+curl -s localhost:8000/store-api/checkout/cart "${H[@]}" "${T[@]}"
+```
+
+Accounts and checkout:
+
+```sh
+curl -si localhost:8000/store-api/account/register "${H[@]}" -d '{"firstName": "Ada", "lastName": "Lovelace",
+  "email": "ada@example.com", "password": "analytical-engine",
+  "billingAddress": {"street": "Main St 1", "zipcode": "10115", "city": "Berlin", "countryId": "0191a6f0f4a07c7e9b1c2d3e4f5a7001"}}'
+curl -s localhost:8000/store-api/checkout/order "${H[@]}" "${T[@]}" -d '{"customerComment": "Ring twice"}'
+```
+
+The context token is the session: registration, login and logout always answer with a new
+`sw-context-token`, a password change ends the customer's other sessions. Placing an order
+recalculates the cart first and refuses if anything changed; stock is booked in the same
+transaction, so closeout products cannot be oversold.
+
+Variants are defined by property options (`product.options`), descriptive properties live in
+`product.properties`. `POST /api/_action/product/{id}/generate-variants` with `{"options": [...]}`
+creates one variant per combination (one option per property group) and skips existing ones.
+Product pages answer with Shopware's `configurator` (options flagged `combinable`) and
+`sortedProperties`; `/store-api/product/{id}/find-variant` maps chosen options to a variant, and
+listings take `properties=<id>|<id>` (OR within a group, AND across groups) with a
+`properties` aggregation of all filterable groups.
+
+Shopping experiences use Shopware's CMS model (page → sections → blocks → slots, slot config
+translated). `/store-api/category/{id}` answers with the category's `cmsPage`, falling back to
+the locked default listing page, and resolves slot `data` for `text`, `image`, `image-slider`,
+`image-gallery`, `product-box`, `product-slider` and `product-listing` (listing parameters in the
+request apply). Pages are edited through the Admin-API for now; the Administration assigns
+them to categories.
+
+SEO URLs follow Shopware's default templates (`Shoes/Sneakers/` for categories below the sales
+channel's navigation root, `Boot/SW-10001` for products) and are updated after every Admin-API
+write to products, categories, sales channels and languages. Renamed entities keep their old
+URL as a non-canonical one, so `/store-api/seo-url` can still resolve it for a redirect; URLs
+marked `isModified` are never regenerated. `ferroshop seo:generate` rebuilds all of them, e.g.
+after an import.
+
+Carts store only references and quantities and are recalculated on every read; products that
+sold out, were deactivated or changed their purchase rules are adjusted and reported once in
+`errors`.
+
+Storefront visitors only see active products, categories, countries, payment and shipping
+methods, and criteria may only reach catalogue entities. Listings also take Shopware's
+`manufacturer`, `min-price`, `max-price` and `no-aggregations` parameters.
+
 ## Layout
 
 ```
 backend/crates/
   ferroshop-core       entity definitions (entity! macro), criteria, SQL compiler, read/write, migrations
   ferroshop-admin-api  axum router for /api: OAuth2, generic entity endpoints, OpenAPI
-  ferroshop-store-api  /store-api (phase 2)
+  ferroshop-store-api  /store-api: sales channel context, catalogue, listings, navigation
   ferroshop-cli        the `ferroshop` binary: serve, migrate, user:create, demo-data
 admin/                 Vue 3 + Vite + TypeScript + Meteor Component Library
 ```
@@ -90,6 +162,7 @@ Adding an entity means writing a migration and an `entity!` block in
 
 ```sh
 cd backend && cargo test     # needs DATABASE_URL; sqlx::test creates a database per test
+                             # crates/*/tests: entity layer, milestone 2, Admin-API and Store-API over HTTP
 ```
 
 ## License

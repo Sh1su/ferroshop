@@ -1,6 +1,6 @@
 //! Generic search / read for every entity.
 
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::collections::{HashMap, HashSet};
 use std::future::Future;
 use std::pin::Pin;
 
@@ -35,7 +35,7 @@ pub async fn search(db: &Db, entity: &str, criteria: &Criteria, ctx: &Context) -
 
 /// Strips fields not listed in `includes`, keyed by each object's `apiAlias`.
 /// Runs last so association loading can still rely on ids and foreign keys.
-fn apply_includes(value: &mut Value, includes: &HashMap<String, Vec<String>>) {
+pub fn apply_includes(value: &mut Value, includes: &HashMap<String, Vec<String>>) {
     match value {
         Value::Object(map) => {
             let alias = map.get("apiAlias").and_then(Value::as_str).map(str::to_string);
@@ -106,6 +106,28 @@ pub fn search_def<'a>(
     })
 }
 
+/// Ids of rows matching the criteria's filters and term, ignoring post filters (like
+/// aggregations do), at most `limit`. For aggregations the SQL layer cannot express, such as
+/// the property options of all products in a listing.
+pub async fn matching_ids(
+    db: &Db,
+    entity: &str,
+    criteria: &Criteria,
+    ctx: &Context,
+    limit: u64,
+) -> Result<Vec<String>> {
+    let def = entities::require(entity)?;
+    let alias = "t0";
+    let mut binds = Binds::new(ctx);
+    let where_sql = sql::where_clause(&mut binds, def, alias, criteria, ctx, false)?;
+    let query = format!(
+        "SELECT replace({alias}.id::text, '-', '') AS id FROM {} {alias} WHERE {where_sql} LIMIT {limit}",
+        def.table
+    );
+    let rows = binds.query(&query).fetch_all(db).await?;
+    rows.into_iter().map(|r| r.try_get::<String, _>("id").map_err(Into::into)).collect()
+}
+
 async fn aggregate(
     db: &Db,
     def: &'static EntityDefinition,
@@ -146,27 +168,6 @@ async fn aggregate(
     Ok(out)
 }
 
-/// Turns `{"manufacturer.media": {}}` into nested criteria.
-fn normalized_associations(criteria: &Criteria) -> BTreeMap<String, Criteria> {
-    let mut out: BTreeMap<String, Criteria> = BTreeMap::new();
-    for (name, sub) in &criteria.associations {
-        let mut parts = name.splitn(2, '.');
-        let head = parts.next().unwrap_or_default().to_string();
-        let entry = out.entry(head).or_default();
-        match parts.next() {
-            Some(rest) => {
-                entry.associations.insert(rest.to_string(), sub.clone());
-            }
-            None => {
-                let nested = std::mem::take(&mut entry.associations);
-                *entry = sub.clone();
-                entry.associations.extend(nested);
-            }
-        }
-    }
-    out
-}
-
 fn id_list(rows: &[Value], key: &str) -> Vec<String> {
     let mut seen = HashSet::new();
     rows.iter()
@@ -186,7 +187,7 @@ async fn load_associations(
     if rows.is_empty() {
         return Ok(());
     }
-    for (name, mut sub) in normalized_associations(criteria) {
+    for (name, mut sub) in criteria.nested_associations() {
         let field = def
             .field(&name)
             .filter(|f| f.kind.is_association())

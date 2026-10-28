@@ -84,6 +84,134 @@ export interface paths {
         patch: operations["updateCategory"];
         trace?: never;
     };
+    "/cms-block": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listCmsBlock"];
+        put?: never;
+        post: operations["createCmsBlock"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/cms-block/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getCmsBlock"];
+        put?: never;
+        post?: never;
+        delete: operations["deleteCmsBlock"];
+        options?: never;
+        head?: never;
+        patch: operations["updateCmsBlock"];
+        trace?: never;
+    };
+    "/cms-page": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listCmsPage"];
+        put?: never;
+        post: operations["createCmsPage"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/cms-page/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getCmsPage"];
+        put?: never;
+        post?: never;
+        delete: operations["deleteCmsPage"];
+        options?: never;
+        head?: never;
+        patch: operations["updateCmsPage"];
+        trace?: never;
+    };
+    "/cms-section": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listCmsSection"];
+        put?: never;
+        post: operations["createCmsSection"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/cms-section/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getCmsSection"];
+        put?: never;
+        post?: never;
+        delete: operations["deleteCmsSection"];
+        options?: never;
+        head?: never;
+        patch: operations["updateCmsSection"];
+        trace?: never;
+    };
+    "/cms-slot": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listCmsSlot"];
+        put?: never;
+        post: operations["createCmsSlot"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/cms-slot/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getCmsSlot"];
+        put?: never;
+        post?: never;
+        delete: operations["deleteCmsSlot"];
+        options?: never;
+        head?: never;
+        patch: operations["updateCmsSlot"];
+        trace?: never;
+    };
     "/country": {
         parameters: {
             query?: never;
@@ -580,6 +708,70 @@ export interface paths {
         patch: operations["updateProduct"];
         trace?: never;
     };
+    "/property-group": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listPropertyGroup"];
+        put?: never;
+        post: operations["createPropertyGroup"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/property-group-option": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listPropertyGroupOption"];
+        put?: never;
+        post: operations["createPropertyGroupOption"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/property-group-option/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPropertyGroupOption"];
+        put?: never;
+        post?: never;
+        delete: operations["deletePropertyGroupOption"];
+        options?: never;
+        head?: never;
+        patch: operations["updatePropertyGroupOption"];
+        trace?: never;
+    };
+    "/property-group/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPropertyGroup"];
+        put?: never;
+        post?: never;
+        delete: operations["deletePropertyGroup"];
+        options?: never;
+        head?: never;
+        patch: operations["updatePropertyGroup"];
+        trace?: never;
+    };
     "/sales-channel": {
         parameters: {
             query?: never;
@@ -638,6 +830,70 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["searchCategory"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/search/cms-block": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["searchCmsBlock"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/search/cms-page": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["searchCmsPage"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/search/cms-section": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["searchCmsSection"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/search/cms-slot": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["searchCmsSlot"];
         delete?: never;
         options?: never;
         head?: never;
@@ -884,6 +1140,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/search/property-group": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["searchPropertyGroup"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/search/property-group-option": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["searchPropertyGroupOption"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/search/sales-channel": {
         parameters: {
             query?: never;
@@ -894,6 +1182,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["searchSalesChannel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/search/seo-url": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["searchSeoUrl"];
         delete?: never;
         options?: never;
         head?: never;
@@ -946,6 +1250,38 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/seo-url": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listSeoUrl"];
+        put?: never;
+        post: operations["createSeoUrl"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/seo-url/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getSeoUrl"];
+        put?: never;
+        post?: never;
+        delete: operations["deleteSeoUrl"];
+        options?: never;
+        head?: never;
+        patch: operations["updateSeoUrl"];
         trace?: never;
     };
     "/shipping-method": {
@@ -1066,6 +1402,8 @@ export interface components {
             active?: boolean;
             readonly childCount?: number;
             children?: components["schemas"]["Category"][];
+            cmsPage?: components["schemas"]["CmsPage"];
+            cmsPageId?: string;
             /** Format: date-time */
             readonly createdAt?: string;
             customFields?: {
@@ -1081,6 +1419,7 @@ export interface components {
             parentId?: string;
             position?: number;
             products?: components["schemas"]["Product"][];
+            seoUrls?: components["schemas"]["SeoUrl"][];
             readonly translated?: {
                 customFields?: {
                     [key: string]: unknown;
@@ -1095,6 +1434,80 @@ export interface components {
             /** Format: date-time */
             readonly updatedAt?: string;
             visible?: boolean;
+        };
+        CmsBlock: {
+            backgroundColor?: string;
+            /** Format: date-time */
+            readonly createdAt?: string;
+            cssClass?: string;
+            id?: string;
+            marginBottom?: string;
+            marginLeft?: string;
+            marginRight?: string;
+            marginTop?: string;
+            name?: string;
+            position?: number;
+            section?: components["schemas"]["CmsSection"];
+            sectionId: string;
+            sectionPosition?: string;
+            slots?: components["schemas"]["CmsSlot"][];
+            type: string;
+            /** Format: date-time */
+            readonly updatedAt?: string;
+        };
+        CmsPage: {
+            categories?: components["schemas"]["Category"][];
+            /** Format: date-time */
+            readonly createdAt?: string;
+            cssClass?: string;
+            id?: string;
+            readonly locked?: boolean;
+            name: string;
+            sections?: components["schemas"]["CmsSection"][];
+            readonly translated?: {
+                name?: string;
+            };
+            type?: string;
+            /** Format: date-time */
+            readonly updatedAt?: string;
+        };
+        CmsSection: {
+            backgroundColor?: string;
+            backgroundMedia?: components["schemas"]["Media"];
+            backgroundMediaId?: string;
+            blocks?: components["schemas"]["CmsBlock"][];
+            /** Format: date-time */
+            readonly createdAt?: string;
+            cssClass?: string;
+            id?: string;
+            mobileBehavior?: string;
+            page?: components["schemas"]["CmsPage"];
+            pageId: string;
+            position?: number;
+            sizingMode?: string;
+            type?: string;
+            /** Format: date-time */
+            readonly updatedAt?: string;
+        };
+        CmsSlot: {
+            block?: components["schemas"]["CmsBlock"];
+            blockId: string;
+            config?: {
+                [key: string]: unknown;
+            };
+            /** Format: date-time */
+            readonly createdAt?: string;
+            id?: string;
+            readonly locked?: boolean;
+            slot: string;
+            readonly translated?: {
+                config?: {
+                    [key: string]: unknown;
+                };
+            };
+            type: string;
+            /** Format: date-time */
+            readonly updatedAt?: string;
         };
         Country: {
             active?: boolean;
@@ -1398,6 +1811,7 @@ export interface components {
         Product: {
             active?: boolean;
             categories?: components["schemas"]["Category"][];
+            readonly cheapestGross?: number;
             readonly childCount?: number;
             children?: components["schemas"]["Product"][];
             cover?: components["schemas"]["ProductMedia"];
@@ -1424,13 +1838,16 @@ export interface components {
             metaTitle?: string;
             minPurchase?: number;
             name: string;
+            options?: components["schemas"]["PropertyGroupOption"][];
             parent?: components["schemas"]["Product"];
             parentId?: string;
             price: components["schemas"]["Price"][];
             productNumber: string;
+            properties?: components["schemas"]["PropertyGroupOption"][];
             purchaseSteps?: number;
             /** Format: date-time */
             releaseDate?: string;
+            seoUrls?: components["schemas"]["SeoUrl"][];
             shippingFree?: boolean;
             stock: number;
             tax?: components["schemas"]["Tax"];
@@ -1485,9 +1902,47 @@ export interface components {
             /** Format: date-time */
             readonly updatedAt?: string;
         };
+        PropertyGroup: {
+            /** Format: date-time */
+            readonly createdAt?: string;
+            description?: string;
+            displayType?: string;
+            filterable?: boolean;
+            id?: string;
+            name: string;
+            options?: components["schemas"]["PropertyGroupOption"][];
+            position?: number;
+            sortingType?: string;
+            readonly translated?: {
+                description?: string;
+                name?: string;
+            };
+            /** Format: date-time */
+            readonly updatedAt?: string;
+            visibleOnProductDetailPage?: boolean;
+        };
+        PropertyGroupOption: {
+            colorHexCode?: string;
+            /** Format: date-time */
+            readonly createdAt?: string;
+            group?: components["schemas"]["PropertyGroup"];
+            groupId: string;
+            id?: string;
+            media?: components["schemas"]["Media"];
+            mediaId?: string;
+            name: string;
+            position?: number;
+            readonly translated?: {
+                name?: string;
+            };
+            /** Format: date-time */
+            readonly updatedAt?: string;
+        };
         SalesChannel: {
             accessKey: string;
             active?: boolean;
+            country?: components["schemas"]["Country"];
+            countryId?: string;
             /** Format: date-time */
             readonly createdAt?: string;
             currency?: components["schemas"]["Currency"];
@@ -1495,12 +1950,18 @@ export interface components {
             customFields?: {
                 [key: string]: unknown;
             };
+            customerGroup?: components["schemas"]["CustomerGroup"];
+            customerGroupId?: string;
             id?: string;
             language?: components["schemas"]["Language"];
             languageId: string;
             name: string;
             navigationCategory?: components["schemas"]["Category"];
             navigationCategoryId?: string;
+            paymentMethod?: components["schemas"]["PaymentMethod"];
+            paymentMethodId?: string;
+            shippingMethod?: components["schemas"]["ShippingMethod"];
+            shippingMethodId?: string;
             readonly translated?: {
                 customFields?: {
                     [key: string]: unknown;
@@ -1508,6 +1969,24 @@ export interface components {
                 name?: string;
             };
             typeId?: string;
+            /** Format: date-time */
+            readonly updatedAt?: string;
+        };
+        SeoUrl: {
+            /** Format: date-time */
+            readonly createdAt?: string;
+            foreignKey: string;
+            id?: string;
+            isCanonical?: boolean;
+            isDeleted?: boolean;
+            isModified?: boolean;
+            language?: components["schemas"]["Language"];
+            languageId: string;
+            pathInfo: string;
+            routeName: string;
+            salesChannel?: components["schemas"]["SalesChannel"];
+            salesChannelId: string;
+            seoPathInfo: string;
             /** Format: date-time */
             readonly updatedAt?: string;
         };
@@ -1954,6 +2433,770 @@ export interface operations {
                 content: {
                     "application/json": {
                         data?: components["schemas"]["Category"];
+                    };
+                };
+            };
+            /** @description Updated */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    listCmsBlock: {
+        parameters: {
+            query?: {
+                limit?: number;
+                page?: number;
+                term?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        aggregations?: Record<string, never>;
+                        data?: components["schemas"]["CmsBlock"][];
+                        total?: number;
+                    };
+                };
+            };
+        };
+    };
+    createCmsBlock: {
+        parameters: {
+            query?: {
+                /** @description Return the written entity instead of 204. */
+                _response?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CmsBlock"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["CmsBlock"];
+                    };
+                };
+            };
+            /** @description Created */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    getCmsBlock: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["CmsBlock"];
+                    };
+                };
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    deleteCmsBlock: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    updateCmsBlock: {
+        parameters: {
+            query?: {
+                /** @description Return the written entity instead of 204. */
+                _response?: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CmsBlock"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["CmsBlock"];
+                    };
+                };
+            };
+            /** @description Updated */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    listCmsPage: {
+        parameters: {
+            query?: {
+                limit?: number;
+                page?: number;
+                term?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        aggregations?: Record<string, never>;
+                        data?: components["schemas"]["CmsPage"][];
+                        total?: number;
+                    };
+                };
+            };
+        };
+    };
+    createCmsPage: {
+        parameters: {
+            query?: {
+                /** @description Return the written entity instead of 204. */
+                _response?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CmsPage"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["CmsPage"];
+                    };
+                };
+            };
+            /** @description Created */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    getCmsPage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["CmsPage"];
+                    };
+                };
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    deleteCmsPage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    updateCmsPage: {
+        parameters: {
+            query?: {
+                /** @description Return the written entity instead of 204. */
+                _response?: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CmsPage"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["CmsPage"];
+                    };
+                };
+            };
+            /** @description Updated */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    listCmsSection: {
+        parameters: {
+            query?: {
+                limit?: number;
+                page?: number;
+                term?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        aggregations?: Record<string, never>;
+                        data?: components["schemas"]["CmsSection"][];
+                        total?: number;
+                    };
+                };
+            };
+        };
+    };
+    createCmsSection: {
+        parameters: {
+            query?: {
+                /** @description Return the written entity instead of 204. */
+                _response?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CmsSection"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["CmsSection"];
+                    };
+                };
+            };
+            /** @description Created */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    getCmsSection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["CmsSection"];
+                    };
+                };
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    deleteCmsSection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    updateCmsSection: {
+        parameters: {
+            query?: {
+                /** @description Return the written entity instead of 204. */
+                _response?: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CmsSection"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["CmsSection"];
+                    };
+                };
+            };
+            /** @description Updated */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    listCmsSlot: {
+        parameters: {
+            query?: {
+                limit?: number;
+                page?: number;
+                term?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        aggregations?: Record<string, never>;
+                        data?: components["schemas"]["CmsSlot"][];
+                        total?: number;
+                    };
+                };
+            };
+        };
+    };
+    createCmsSlot: {
+        parameters: {
+            query?: {
+                /** @description Return the written entity instead of 204. */
+                _response?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CmsSlot"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["CmsSlot"];
+                    };
+                };
+            };
+            /** @description Created */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    getCmsSlot: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["CmsSlot"];
+                    };
+                };
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    deleteCmsSlot: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    updateCmsSlot: {
+        parameters: {
+            query?: {
+                /** @description Return the written entity instead of 204. */
+                _response?: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CmsSlot"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["CmsSlot"];
                     };
                 };
             };
@@ -4882,6 +6125,388 @@ export interface operations {
             };
         };
     };
+    listPropertyGroup: {
+        parameters: {
+            query?: {
+                limit?: number;
+                page?: number;
+                term?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        aggregations?: Record<string, never>;
+                        data?: components["schemas"]["PropertyGroup"][];
+                        total?: number;
+                    };
+                };
+            };
+        };
+    };
+    createPropertyGroup: {
+        parameters: {
+            query?: {
+                /** @description Return the written entity instead of 204. */
+                _response?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PropertyGroup"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["PropertyGroup"];
+                    };
+                };
+            };
+            /** @description Created */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    listPropertyGroupOption: {
+        parameters: {
+            query?: {
+                limit?: number;
+                page?: number;
+                term?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        aggregations?: Record<string, never>;
+                        data?: components["schemas"]["PropertyGroupOption"][];
+                        total?: number;
+                    };
+                };
+            };
+        };
+    };
+    createPropertyGroupOption: {
+        parameters: {
+            query?: {
+                /** @description Return the written entity instead of 204. */
+                _response?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PropertyGroupOption"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["PropertyGroupOption"];
+                    };
+                };
+            };
+            /** @description Created */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    getPropertyGroupOption: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["PropertyGroupOption"];
+                    };
+                };
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    deletePropertyGroupOption: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    updatePropertyGroupOption: {
+        parameters: {
+            query?: {
+                /** @description Return the written entity instead of 204. */
+                _response?: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PropertyGroupOption"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["PropertyGroupOption"];
+                    };
+                };
+            };
+            /** @description Updated */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    getPropertyGroup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["PropertyGroup"];
+                    };
+                };
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    deletePropertyGroup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    updatePropertyGroup: {
+        parameters: {
+            query?: {
+                /** @description Return the written entity instead of 204. */
+                _response?: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PropertyGroup"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["PropertyGroup"];
+                    };
+                };
+            };
+            /** @description Updated */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
     listSalesChannel: {
         parameters: {
             query?: {
@@ -5132,6 +6757,154 @@ export interface operations {
                     "application/json": {
                         aggregations?: Record<string, never>;
                         data?: components["schemas"]["Category"][];
+                        total?: number;
+                    };
+                };
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    searchCmsBlock: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Criteria"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        aggregations?: Record<string, never>;
+                        data?: components["schemas"]["CmsBlock"][];
+                        total?: number;
+                    };
+                };
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    searchCmsPage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Criteria"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        aggregations?: Record<string, never>;
+                        data?: components["schemas"]["CmsPage"][];
+                        total?: number;
+                    };
+                };
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    searchCmsSection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Criteria"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        aggregations?: Record<string, never>;
+                        data?: components["schemas"]["CmsSection"][];
+                        total?: number;
+                    };
+                };
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    searchCmsSlot: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Criteria"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        aggregations?: Record<string, never>;
+                        data?: components["schemas"]["CmsSlot"][];
                         total?: number;
                     };
                 };
@@ -5702,6 +7475,80 @@ export interface operations {
             };
         };
     };
+    searchPropertyGroup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Criteria"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        aggregations?: Record<string, never>;
+                        data?: components["schemas"]["PropertyGroup"][];
+                        total?: number;
+                    };
+                };
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    searchPropertyGroupOption: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Criteria"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        aggregations?: Record<string, never>;
+                        data?: components["schemas"]["PropertyGroupOption"][];
+                        total?: number;
+                    };
+                };
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
     searchSalesChannel: {
         parameters: {
             query?: never;
@@ -5724,6 +7571,43 @@ export interface operations {
                     "application/json": {
                         aggregations?: Record<string, never>;
                         data?: components["schemas"]["SalesChannel"][];
+                        total?: number;
+                    };
+                };
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    searchSeoUrl: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Criteria"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        aggregations?: Record<string, never>;
+                        data?: components["schemas"]["SeoUrl"][];
                         total?: number;
                     };
                 };
@@ -5841,6 +7725,197 @@ export interface operations {
             };
             /** @description Error */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    listSeoUrl: {
+        parameters: {
+            query?: {
+                limit?: number;
+                page?: number;
+                term?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        aggregations?: Record<string, never>;
+                        data?: components["schemas"]["SeoUrl"][];
+                        total?: number;
+                    };
+                };
+            };
+        };
+    };
+    createSeoUrl: {
+        parameters: {
+            query?: {
+                /** @description Return the written entity instead of 204. */
+                _response?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SeoUrl"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["SeoUrl"];
+                    };
+                };
+            };
+            /** @description Created */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    getSeoUrl: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["SeoUrl"];
+                    };
+                };
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    deleteSeoUrl: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    updateSeoUrl: {
+        parameters: {
+            query?: {
+                /** @description Return the written entity instead of 204. */
+                _response?: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SeoUrl"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["SeoUrl"];
+                    };
+                };
+            };
+            /** @description Updated */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+            /** @description Error */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
