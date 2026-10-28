@@ -40,9 +40,15 @@ pub struct StoredItem {
 pub struct Calculated {
     pub json: Value,
     pub items: Vec<StoredItem>,
+    /// Adjustments made during this calculation (empty when the cart was unchanged).
+    pub errors: BTreeMap<String, Value>,
 }
 
-async fn load(conn: &mut PgConnection, sc: &SalesChannelContext, lock: bool) -> Result<Vec<StoredItem>, ApiError> {
+pub(crate) async fn load(
+    conn: &mut PgConnection,
+    sc: &SalesChannelContext,
+    lock: bool,
+) -> Result<Vec<StoredItem>, ApiError> {
     let query = format!(
         "SELECT line_items FROM cart WHERE token = $1 AND sales_channel_id = $2{}",
         if lock { " FOR UPDATE" } else { "" }
@@ -58,7 +64,11 @@ async fn load(conn: &mut PgConnection, sc: &SalesChannelContext, lock: bool) -> 
     })
 }
 
-async fn save(conn: &mut PgConnection, sc: &SalesChannelContext, items: &[StoredItem]) -> Result<(), ApiError> {
+pub(crate) async fn save(
+    conn: &mut PgConnection,
+    sc: &SalesChannelContext,
+    items: &[StoredItem],
+) -> Result<(), ApiError> {
     if items.is_empty() {
         sqlx::query("DELETE FROM cart WHERE token = $1 AND sales_channel_id = $2")
             .bind(&sc.token)
@@ -308,7 +318,7 @@ pub async fn calculate(
         })]
     };
     // Shopware renders an empty error collection as a list, a filled one as an object.
-    let errors_json = if errors.is_empty() { json!([]) } else { json!(errors) };
+    let errors_json = if errors.is_empty() { json!([]) } else { json!(&errors) };
     let json = json!({
         "name": "sales-channel",
         "token": sc.token,
@@ -323,7 +333,7 @@ pub async fn calculate(
         "campaignCode": null,
         "apiAlias": "cart",
     });
-    Ok(Calculated { json, items })
+    Ok(Calculated { json, items, errors })
 }
 
 /// Loads, changes and recalculates the cart in one transaction, then stores the result.

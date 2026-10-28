@@ -3,16 +3,18 @@
 //! Every request names its sales channel with `sw-access-key`; `sw-context-token` identifies the
 //! visitor's context (language, currency, later customer and cart) and is echoed on every response.
 
+mod account;
 mod cart;
 mod catalog;
 mod context;
 mod guard;
 mod listing;
+mod order;
 mod pricing;
 
 use axum::Router;
 use axum::middleware;
-use axum::routing::{get, post};
+use axum::routing::{get, patch, post};
 use ferroshop_core::Db;
 
 pub use context::SalesChannelContext;
@@ -43,6 +45,20 @@ pub fn router(state: StoreState) -> Router {
         .route("/checkout/cart", get(cart::show).delete(cart::clear))
         .route("/checkout/cart/line-item", post(cart::add).patch(cart::update).delete(cart::remove))
         .route("/checkout/cart/line-item/delete", post(cart::remove_post))
+        .route("/checkout/order", post(order::place))
+        .route("/order", post(order::list).get(order::list))
+        .route("/account/register", post(account::register))
+        .route("/account/login", post(account::login))
+        .route("/account/logout", post(account::logout))
+        .route("/account/customer", post(account::customer).get(account::customer))
+        .route("/account/change-profile", post(account::change_profile))
+        .route("/account/change-email", post(account::change_email))
+        .route("/account/change-password", post(account::change_password))
+        .route("/account/list-address", post(account::list_addresses).get(account::list_addresses))
+        .route("/account/address", post(account::create_address))
+        .route("/account/address/{id}", patch(account::update_address).delete(account::delete_address))
+        .route("/account/address/default-billing/{id}", patch(account::default_billing))
+        .route("/account/address/default-shipping/{id}", patch(account::default_shipping))
         .route("/currency", post(catalog::currencies).get(catalog::currencies))
         .route("/language", post(catalog::languages).get(catalog::languages))
         .route("/country", post(catalog::countries).get(catalog::countries))

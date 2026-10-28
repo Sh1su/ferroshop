@@ -24,11 +24,34 @@ pub(crate) async fn search(
     state: &StoreState,
     sc: &SalesChannelContext,
     entity: &str,
-    mut criteria: Criteria,
+    criteria: Criteria,
     default_limit: u64,
 ) -> Result<SearchResult, ApiError> {
+    search_in(state, sc, entity, criteria, default_limit, false).await
+}
+
+/// [`search`] over a customer's own records (orders, addresses). The caller adds the filter
+/// that limits the root entity to the logged-in customer.
+pub(crate) async fn search_own(
+    state: &StoreState,
+    sc: &SalesChannelContext,
+    entity: &str,
+    criteria: Criteria,
+    default_limit: u64,
+) -> Result<SearchResult, ApiError> {
+    search_in(state, sc, entity, criteria, default_limit, true).await
+}
+
+async fn search_in(
+    state: &StoreState,
+    sc: &SalesChannelContext,
+    entity: &str,
+    mut criteria: Criteria,
+    default_limit: u64,
+    own: bool,
+) -> Result<SearchResult, ApiError> {
     let def = guard::definition(entity);
-    guard::check(def, &criteria)?;
+    guard::check_in(def, &criteria, own)?;
     guard::restrict(def, &mut criteria);
     guard::limit(&mut criteria, default_limit);
     let mut result = read::search_def(&state.db, def, &criteria, &sc.core()).await?;

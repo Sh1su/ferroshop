@@ -24,6 +24,13 @@ const PUBLIC: &[&str] = &[
     "shipping_method",
 ];
 
+/// What a logged-in customer may additionally read, always filtered to their own records.
+pub const CUSTOMER_OWNED: &[&str] = &["order", "order_line_item", "order_address", "customer_address"];
+
+fn allowed(name: &str, own: bool) -> bool {
+    PUBLIC.contains(&name) || (own && CUSTOMER_OWNED.contains(&name))
+}
+
 pub fn definition(name: &str) -> &'static EntityDefinition {
     entities::get(name).expect("store-api entity is registered")
 }
@@ -56,7 +63,7 @@ fn filter_paths<'a>(filter: &'a Filter, out: &mut Vec<&'a str>) {
 }
 
 /// Every association a field path passes must lead to a public entity.
-fn check_path(def: &'static EntityDefinition, path: &str) -> Result<(), ApiError> {
+fn check_path(def: &'static EntityDefinition, path: &str, own: bool) -> Result<(), ApiError> {
     let mut current = def;
     let mut segments = path.split('.').peekable();
     if segments.peek() == Some(&def.name) {
@@ -67,7 +74,7 @@ fn check_path(def: &'static EntityDefinition, path: &str) -> Result<(), ApiError
             continue;
         }
         match association_target(current, segment) {
-            Some(target) if PUBLIC.contains(&target.name) => current = target,
+            Some(target) if allowed(target.name, own) => current = target,
             Some(_) => return Err(forbidden(current, segment)),
             // Scalars and unknown fields are left to the SQL compiler.
             None => break,
@@ -76,8 +83,10 @@ fn check_path(def: &'static EntityDefinition, path: &str) -> Result<(), ApiError
     Ok(())
 }
 
-/// Validates a criteria (recursively through associations) against the public entities.
-pub fn check(def: &'static EntityDefinition, criteria: &Criteria) -> Result<(), ApiError> {
+/// Validates a criteria (recursively through associations) against the public entities, plus
+/// [`CUSTOMER_OWNED`] ones when `own` is set. The caller must
+/// filter the root entity to the customer's records.
+pub fn check_in(def: &'static EntityDefinition, criteria: &Criteria, own: bool) -> Result<(), ApiError> {
     let mut paths: Vec<&str> = Vec::new();
     for filter in criteria.filter.iter().chain(&criteria.post_filter) {
         filter_paths(filter, &mut paths);
@@ -85,11 +94,11 @@ pub fn check(def: &'static EntityDefinition, criteria: &Criteria) -> Result<(), 
     paths.extend(criteria.sort.iter().map(|s| s.field.as_str()));
     paths.extend(criteria.aggregations.iter().map(|a| a.field.as_str()));
     for path in paths {
-        check_path(def, path)?;
+        check_path(def, path, own)?;
     }
     for (name, sub) in criteria.nested_associations() {
         match association_target(def, &name) {
-            Some(target) if PUBLIC.contains(&target.name) => check(target, &sub)?,
+            Some(target) if allowed(target.name, own) => check_in(target, &sub, own)?,
             Some(_) => return Err(forbidden(def, &name)),
             None => {
                 return Err(ApiError::BadRequest(format!("association `{name}` does not exist on `{}`", def.name)));
@@ -108,7 +117,7 @@ fn visibility(def: &EntityDefinition) -> Option<Filter> {
     }
 }
 
-/// Adds visibility filters to the criteria and every loaded association. Call after [`check`].
+/// Adds visibility filters to the criteria and every loaded association. Call after [`check_in`].
 pub fn restrict(def: &'static EntityDefinition, criteria: &mut Criteria) {
     criteria.filter.extend(visibility(def));
     let mut nested = criteria.nested_associations();

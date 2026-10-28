@@ -30,6 +30,8 @@ pub struct SalesChannelContext {
     pub payment_method_id: Uuid,
     pub shipping_method_id: Uuid,
     pub price: PriceContext,
+    /// The logged-in (or guest) customer.
+    pub customer_id: Option<Uuid>,
 }
 
 impl SalesChannelContext {
@@ -39,7 +41,7 @@ impl SalesChannelContext {
     }
 }
 
-fn new_token() -> String {
+pub(crate) fn new_token() -> String {
     hex::encode(rand::random::<[u8; 16]>())
 }
 
@@ -89,7 +91,34 @@ async fn load(
         None => payload_id(&payload, "languageId", channel.try_get("language_id")?),
     };
     let currency_id = payload_id(&payload, "currencyId", channel.try_get("currency_id")?);
-    let customer_group_id: Uuid = channel.try_get("customer_group_id")?;
+
+    // A customer's group, default payment method and shipping country replace the channel's
+    // defaults; explicit choices in the context still win.
+    let customer_id = payload.get("customerId").and_then(Value::as_str).and_then(id::parse);
+    let customer = match customer_id {
+        Some(customer_id) => {
+            sqlx::query(
+                "SELECT c.id, c.group_id, \
+                 (SELECT p.id FROM payment_method p WHERE p.id = c.default_payment_method_id AND p.active) AS payment, \
+                 (SELECT a.country_id FROM customer_address a WHERE a.id = c.default_shipping_address_id) AS country \
+                 FROM customer c WHERE c.id = $1 AND c.sales_channel_id = $2 AND c.active",
+            )
+            .bind(customer_id)
+            .bind(sales_channel_id)
+            .fetch_optional(db)
+            .await?
+        }
+        None => None,
+    };
+    let customer_default = |column: &str, fallback: Uuid| -> Result<Uuid, sqlx::Error> {
+        Ok(match &customer {
+            Some(row) => row.try_get::<Option<Uuid>, _>(column)?.unwrap_or(fallback),
+            None => fallback,
+        })
+    };
+    let customer_group_id = customer_default("group_id", channel.try_get("customer_group_id")?)?;
+    let country_default = customer_default("country", channel.try_get("country_id")?)?;
+    let payment_default = customer_default("payment", channel.try_get("payment_method_id")?)?;
     let details = sqlx::query(
         "SELECT (SELECT factor FROM currency WHERE id = $1) AS factor, \
          (SELECT decimal_precision FROM currency WHERE id = $1) AS precision, \
@@ -122,10 +151,14 @@ async fn load(
         navigation_category_id: channel.try_get("navigation_category_id")?,
         language_id,
         customer_group_id,
-        country_id: payload_id(&payload, "countryId", channel.try_get("country_id")?),
-        payment_method_id: payload_id(&payload, "paymentMethodId", channel.try_get("payment_method_id")?),
+        country_id: payload_id(&payload, "countryId", country_default),
+        payment_method_id: payload_id(&payload, "paymentMethodId", payment_default),
         shipping_method_id: payload_id(&payload, "shippingMethodId", channel.try_get("shipping_method_id")?),
         price,
+        customer_id: match &customer {
+            Some(row) => Some(row.try_get("id")?),
+            None => None,
+        },
     })
 }
 
@@ -139,7 +172,10 @@ pub async fn resolve(State(state): State<StoreState>, mut request: Request, next
     let token = HeaderValue::from_str(&ctx.token).expect("hex token");
     request.extensions_mut().insert(ctx);
     let mut response = next.run(request).await;
-    response.headers_mut().insert(CONTEXT_TOKEN, token);
+    // Login, logout and registration answer with a new token of their own.
+    if !response.headers().contains_key(CONTEXT_TOKEN) {
+        response.headers_mut().insert(CONTEXT_TOKEN, token);
+    }
     Ok(response)
 }
 
@@ -177,7 +213,10 @@ pub async fn show(
         "fallbackCustomerGroup": group,
         "currency": entity(db, "currency", sc.price.currency_id, &ctx).await?,
         "salesChannel": entity(db, "sales_channel", sc.sales_channel_id, &ctx).await?,
-        "customer": null,
+        "customer": match sc.customer_id {
+            Some(customer_id) => crate::account::customer_json(db, &sc, customer_id).await?,
+            None => Value::Null,
+        },
         "paymentMethod": entity(db, "payment_method", sc.payment_method_id, &ctx).await?,
         "shippingMethod": entity(db, "shipping_method", sc.shipping_method_id, &ctx).await?,
         "shippingLocation": {

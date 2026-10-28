@@ -418,3 +418,263 @@ async fn cart_applies_purchase_rules_and_stock(db: Db) {
     assert_eq!(cart.body["errors"][format!("product-out-of-stock{closeout}")]["level"], 20);
     assert_eq!(cart.body["errors"][format!("product-not-found{packs}")]["level"], 20);
 }
+
+const GERMANY: &str = "0191a6f0f4a07c7e9b1c2d3e4f5a7001";
+const AUSTRIA: &str = "0191a6f0f4a07c7e9b1c2d3e4f5a7002";
+
+fn registration(email: &str) -> Value {
+    json!({
+        "firstName": "Ada", "lastName": "Lovelace", "email": email, "password": "analytical-engine",
+        "billingAddress": { "street": "Main St 1", "zipcode": "10115", "city": "Berlin", "countryId": GERMANY },
+    })
+}
+
+impl Store {
+    async fn with(&self, method: Method, uri: &str, token: &str, body: Value) -> Reply {
+        self.send(method, uri, Some(token), Some(body)).await
+    }
+
+    async fn register(&self, email: &str) -> String {
+        let reply = self.post("/store-api/account/register", registration(email)).await;
+        assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
+        reply.token.unwrap()
+    }
+
+    async fn login(&self, token: Option<&str>, email: &str, password: &str) -> Reply {
+        let body = json!({ "username": email, "password": password });
+        self.send(Method::POST, "/store-api/account/login", token, Some(body)).await
+    }
+}
+
+#[sqlx::test(migrator = "ferroshop_core::MIGRATOR")]
+async fn registration_login_and_sessions(db: Db) {
+    let store = Store::new(db.clone());
+
+    let invalid = store.post("/store-api/account/register", json!({ "firstName": "Ada", "email": "nope" })).await;
+    assert_eq!(invalid.status, StatusCode::BAD_REQUEST);
+    let pointers: Vec<&str> =
+        invalid.body["errors"].as_array().unwrap().iter().map(|e| e["source"]["pointer"].as_str().unwrap()).collect();
+    assert_eq!(pointers, ["/lastName", "/email", "/password", "/billingAddress"]);
+
+    let anonymous = store.send(Method::GET, "/store-api/context", None, None).await.token.unwrap();
+    let registered = store
+        .send(Method::POST, "/store-api/account/register", Some(&anonymous), Some(registration("ada@example.com")))
+        .await;
+    assert_eq!(registered.status, StatusCode::OK, "{}", registered.body);
+    assert_eq!(registered.body["email"], "ada@example.com");
+    assert_eq!(registered.body["activeBillingAddress"]["country"]["iso"], "DE");
+    assert!(registered.body.get("password").is_none());
+    let session = registered.token.unwrap();
+    assert_ne!(session, anonymous, "registration starts a new session");
+    let context = store.send(Method::GET, "/store-api/context", Some(&session), None).await;
+    assert_eq!(context.body["customer"]["firstName"], "Ada");
+    let old = store.send(Method::GET, "/store-api/context", Some(&anonymous), None).await;
+    assert_eq!(old.body["customer"], Value::Null);
+
+    let duplicate = store.post("/store-api/account/register", registration("ADA@example.com")).await;
+    assert_eq!(duplicate.body["errors"][0]["code"], "VIOLATION::CUSTOMER_EMAIL_NOT_UNIQUE");
+
+    let logout = store.send(Method::POST, "/store-api/account/logout", Some(&session), None).await;
+    assert_eq!(logout.status, StatusCode::OK);
+    let after = logout.token.unwrap();
+    assert_ne!(after, session);
+    for token in [&session, &after] {
+        let reply = store.send(Method::GET, "/store-api/account/customer", Some(token), None).await;
+        assert_eq!(reply.status, StatusCode::FORBIDDEN);
+        assert_eq!(reply.body["errors"][0]["code"], "CHECKOUT__CUSTOMER_NOT_LOGGED_IN");
+    }
+
+    let wrong = store.login(None, "ada@example.com", "wrong-password").await;
+    assert_eq!(wrong.status, StatusCode::UNAUTHORIZED);
+    assert_eq!(wrong.body["errors"][0]["code"], "CHECKOUT__CUSTOMER_AUTH_BAD_CREDENTIALS");
+    let unknown = store.login(None, "nobody@example.com", "analytical-engine").await;
+    assert_eq!(unknown.status, StatusCode::UNAUTHORIZED);
+
+    // The anonymous cart moves into the session on login.
+    let catalog = catalog(&db).await;
+    let guest_token = store.send(Method::GET, "/store-api/context", None, None).await.token.unwrap();
+    let item = json!({ "items": [{ "type": "product", "referencedId": catalog.boot }] });
+    store.with(Method::POST, "/store-api/checkout/cart/line-item", &guest_token, item).await;
+    let login = store.login(Some(&guest_token), "Ada@Example.com", "analytical-engine").await;
+    assert_eq!(login.status, StatusCode::OK, "{}", login.body);
+    let token = login.body["contextToken"].as_str().unwrap().to_string();
+    assert_eq!(login.token.as_deref(), Some(token.as_str()));
+    let cart = store.send(Method::GET, "/store-api/checkout/cart", Some(&token), None).await;
+    assert_eq!(cart.body["lineItems"][0]["id"], catalog.boot);
+    let customer = store.send(Method::GET, "/store-api/account/customer", Some(&token), None).await;
+    assert_eq!(customer.body["lastName"], "Lovelace");
+    assert!(customer.body["lastLogin"].is_string());
+}
+
+#[sqlx::test(migrator = "ferroshop_core::MIGRATOR")]
+async fn profile_password_and_addresses(db: Db) {
+    let store = Store::new(db.clone());
+    store.register("ada@example.com").await;
+    let first = store.login(None, "ada@example.com", "analytical-engine").await.token.unwrap();
+    let second = store.login(None, "ada@example.com", "analytical-engine").await.token.unwrap();
+
+    let profile = json!({ "firstName": "Augusta", "lastName": "King", "company": "Analytical" });
+    let changed = store.with(Method::POST, "/store-api/account/change-profile", &first, profile).await;
+    assert_eq!(changed.status, StatusCode::OK, "{}", changed.body);
+    let customer = store.send(Method::GET, "/store-api/account/customer", Some(&first), None).await;
+    assert_eq!(customer.body["firstName"], "Augusta");
+
+    let wrong =
+        json!({ "password": "nope", "newPassword": "difference-engine", "newPasswordConfirm": "difference-engine" });
+    let reply = store.with(Method::POST, "/store-api/account/change-password", &first, wrong).await;
+    assert_eq!(reply.body["errors"][0]["code"], "VIOLATION::CUSTOMER_PASSWORD_NOT_CORRECT");
+    let short = json!({ "password": "analytical-engine", "newPassword": "short", "newPasswordConfirm": "short" });
+    let reply = store.with(Method::POST, "/store-api/account/change-password", &first, short).await;
+    assert_eq!(reply.body["errors"][0]["source"]["pointer"], "/newPassword");
+    let good = json!({ "password": "analytical-engine", "newPassword": "difference-engine",
+                       "newPasswordConfirm": "difference-engine" });
+    let reply = store.with(Method::POST, "/store-api/account/change-password", &first, good).await;
+    assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
+    let other = store.send(Method::GET, "/store-api/account/customer", Some(&second), None).await;
+    assert_eq!(other.status, StatusCode::FORBIDDEN, "other sessions end with a password change");
+    assert_eq!(store.login(None, "ada@example.com", "difference-engine").await.status, StatusCode::OK);
+
+    let email = json!({ "email": "augusta@example.com", "emailConfirmation": "augusta@example.com",
+                        "password": "difference-engine" });
+    let reply = store.with(Method::POST, "/store-api/account/change-email", &first, email).await;
+    assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
+
+    let address = json!({ "street": "Ring 2", "zipcode": "1010", "city": "Wien", "countryId": AUSTRIA });
+    let created = store.with(Method::POST, "/store-api/account/address", &first, address).await;
+    assert_eq!(created.status, StatusCode::OK, "{}", created.body);
+    assert_eq!(created.body["firstName"], "Augusta", "names default to the customer's");
+    let vienna = created.body["id"].as_str().unwrap().to_string();
+    let listed = store.with(Method::POST, "/store-api/account/list-address", &first, json!({})).await;
+    assert_eq!(listed.body["total"], 2);
+
+    let uri = format!("/store-api/account/address/default-shipping/{vienna}");
+    store.with(Method::PATCH, &uri, &first, json!({})).await;
+    let context = store.send(Method::GET, "/store-api/context", Some(&first), None).await;
+    assert_eq!(context.body["shippingLocation"]["country"]["iso"], "AT", "shipping country follows the address");
+    let removed = store.send(Method::DELETE, &format!("/store-api/account/address/{vienna}"), Some(&first), None).await;
+    assert_eq!(removed.body["errors"][0]["code"], "CHECKOUT__CUSTOMER_ADDRESS_IS_DEFAULT");
+
+    let patched = store
+        .with(
+            Method::PATCH,
+            &format!("/store-api/account/address/{vienna}"),
+            &first,
+            json!({ "street": "Graben 3", "city": "Wien", "countryId": AUSTRIA }),
+        )
+        .await;
+    assert_eq!(patched.body["street"], "Graben 3");
+
+    // Another customer cannot see or change these addresses.
+    let intruder = store.register("eve@example.com").await;
+    let foreign =
+        store.with(Method::PATCH, &format!("/store-api/account/address/{vienna}"), &intruder, json!({})).await;
+    assert_eq!(foreign.status, StatusCode::NOT_FOUND);
+    let theirs = store.with(Method::POST, "/store-api/account/list-address", &intruder, json!({})).await;
+    assert_eq!(theirs.body["total"], 1);
+    let sneaky = store
+        .with(Method::POST, "/store-api/account/list-address", &intruder, json!({ "associations": { "customer": {} } }))
+        .await;
+    assert_eq!(sneaky.status, StatusCode::FORBIDDEN);
+}
+
+#[sqlx::test(migrator = "ferroshop_core::MIGRATOR")]
+async fn checkout_places_orders_and_books_stock(db: Db) {
+    let store = Store::new(db.clone());
+    let catalog = catalog(&db).await;
+    let anonymous = store.send(Method::POST, "/store-api/checkout/order", None, None).await;
+    assert_eq!(anonymous.status, StatusCode::FORBIDDEN);
+
+    let token = store.register("ada@example.com").await;
+    let empty = store.send(Method::POST, "/store-api/checkout/order", Some(&token), None).await;
+    assert_eq!(empty.body["errors"][0]["code"], "CHECKOUT__CART_EMPTY");
+
+    let items = json!({ "items": [
+        { "type": "product", "referencedId": catalog.boot, "quantity": 2 },
+        { "type": "product", "referencedId": catalog.variant, "quantity": 1 },
+    ] });
+    let cart = store.with(Method::POST, "/store-api/checkout/cart/line-item", &token, items).await;
+    let total = cart.body["price"]["totalPrice"].clone();
+    let order =
+        store.with(Method::POST, "/store-api/checkout/order", &token, json!({ "customerComment": "Ring twice" })).await;
+    assert_eq!(order.status, StatusCode::OK, "{}", order.body);
+    assert_eq!(order.body["amountTotal"], total);
+    assert_eq!(order.body["shippingTotal"], 4.99);
+    assert_eq!(order.body["state"], "open");
+    assert_eq!(order.body["customerEmail"], "ada@example.com");
+    assert_eq!(order.body["customerComment"], "Ring twice");
+    assert_eq!(order.body["billingAddress"]["city"], "Berlin");
+    assert_eq!(order.body["billingAddressId"], order.body["shippingAddressId"]);
+    let lines = order.body["lineItems"].as_array().unwrap();
+    assert_eq!(lines.len(), 2);
+    assert!(lines.iter().any(|l| l["label"] == "Boot" && l["quantity"] == 2 && l["totalPrice"] == 238.0));
+
+    let stock: Vec<i32> = sqlx::query_scalar(
+        "SELECT stock FROM product WHERE product_number IN ('B-1', 'S-1.1') ORDER BY product_number",
+    )
+    .fetch_all(&db)
+    .await
+    .unwrap();
+    assert_eq!(stock, [8, 2]);
+    let cart = store.send(Method::GET, "/store-api/checkout/cart", Some(&token), None).await;
+    assert_eq!(cart.body["lineItems"], json!([]), "the cart is emptied");
+
+    let orders =
+        store.with(Method::POST, "/store-api/order", &token, json!({ "associations": { "lineItems": {} } })).await;
+    assert_eq!(orders.status, StatusCode::OK, "{}", orders.body);
+    assert_eq!(orders.body["orders"]["total"], 1);
+    assert_eq!(orders.body["orders"]["elements"][0]["lineItems"].as_array().unwrap().len(), 2);
+    let other = store.register("eve@example.com").await;
+    let none = store.with(Method::POST, "/store-api/order", &other, json!({})).await;
+    assert_eq!(none.body["orders"]["total"], 0);
+
+    // A cart that changed since it was shown is not ordered; the adjusted cart is kept.
+    let tax = id::format(defaults::TAX_STANDARD);
+    let last = create(
+        &db,
+        "product",
+        json!({ "productNumber": "L-1", "name": "Last one", "stock": 2, "taxId": tax, "price": price(20.0),
+                "active": true, "isCloseout": true }),
+    )
+    .await;
+    let item = json!({ "items": [{ "type": "product", "referencedId": last, "quantity": 2 }] });
+    store.with(Method::POST, "/store-api/checkout/cart/line-item", &other, item).await;
+    sqlx::query("UPDATE product SET stock = 1 WHERE product_number = 'L-1'").execute(&db).await.unwrap();
+    let refused = store.send(Method::POST, "/store-api/checkout/order", Some(&other), None).await;
+    assert_eq!(refused.body["errors"][0]["code"], "CHECKOUT__CART_INVALID");
+    let cart = store.send(Method::GET, "/store-api/checkout/cart", Some(&other), None).await;
+    assert_eq!(cart.body["lineItems"][0]["quantity"], 1);
+    let placed = store.send(Method::POST, "/store-api/checkout/order", Some(&other), None).await;
+    assert_eq!(placed.status, StatusCode::OK, "{}", placed.body);
+    let left: i32 =
+        sqlx::query_scalar("SELECT stock FROM product WHERE product_number = 'L-1'").fetch_one(&db).await.unwrap();
+    assert_eq!(left, 0);
+}
+
+#[sqlx::test(migrator = "ferroshop_core::MIGRATOR")]
+async fn guests_can_order_without_an_account(db: Db) {
+    let store = Store::new(db.clone());
+    let catalog = catalog(&db).await;
+    let mut guest = registration("guest@example.com");
+    guest["guest"] = json!(true);
+    guest.as_object_mut().unwrap().remove("password");
+    guest["shippingAddress"] = json!({ "firstName": "Bob", "street": "Ring 2", "city": "Wien", "countryId": AUSTRIA });
+    let registered = store.post("/store-api/account/register", guest.clone()).await;
+    assert_eq!(registered.status, StatusCode::OK, "{}", registered.body);
+    let token = registered.token.unwrap();
+    // Guests may use the same address again and cannot log in.
+    assert_eq!(store.post("/store-api/account/register", guest).await.status, StatusCode::OK);
+    assert_eq!(store.login(None, "guest@example.com", "").await.status, StatusCode::UNAUTHORIZED);
+    let profile = json!({ "firstName": "X", "lastName": "Y" });
+    assert_eq!(
+        store.with(Method::POST, "/store-api/account/change-profile", &token, profile).await.status,
+        StatusCode::FORBIDDEN
+    );
+
+    let item = json!({ "items": [{ "type": "product", "referencedId": catalog.boot }] });
+    store.with(Method::POST, "/store-api/checkout/cart/line-item", &token, item).await;
+    let order = store.send(Method::POST, "/store-api/checkout/order", Some(&token), None).await;
+    assert_eq!(order.status, StatusCode::OK, "{}", order.body);
+    assert_eq!(order.body["shippingAddress"]["firstName"], "Bob");
+    assert_eq!(order.body["shippingAddress"]["country"]["iso"], "AT");
+    assert_ne!(order.body["billingAddressId"], order.body["shippingAddressId"]);
+}

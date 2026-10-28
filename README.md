@@ -26,7 +26,8 @@ An open-source e-commerce backend written in Rust, modelled on the
 | Administration: customers, orders, media library, master data, roles, profile | ✅ |
 | Store-API: context, products, category listings, search, navigation, master data, calculated prices | ✅ |
 | Store-API: cart (line items, purchase rules, closeout stock, shipping costs, tax totals) | ✅ |
-| Store-API: checkout/order, customer account, SEO URLs, CMS pages; Shopware Frontends end-to-end | next |
+| Store-API: registration (incl. guests), login, profile, password, e-mail, addresses, checkout, order history | ✅ |
+| Store-API: password recovery, payment handlers, SEO URLs, CMS pages; Shopware Frontends end-to-end | next |
 
 ## Quick start
 
@@ -94,6 +95,20 @@ curl -s localhost:8000/store-api/checkout/cart/line-item "${H[@]}" "${T[@]}" \
   -d '{"items": [{"type": "product", "referencedId": "<productId>", "quantity": 2}]}'
 curl -s localhost:8000/store-api/checkout/cart "${H[@]}" "${T[@]}"
 ```
+
+Accounts and checkout:
+
+```sh
+curl -si localhost:8000/store-api/account/register "${H[@]}" -d '{"firstName": "Ada", "lastName": "Lovelace",
+  "email": "ada@example.com", "password": "analytical-engine",
+  "billingAddress": {"street": "Main St 1", "zipcode": "10115", "city": "Berlin", "countryId": "0191a6f0f4a07c7e9b1c2d3e4f5a7001"}}'
+curl -s localhost:8000/store-api/checkout/order "${H[@]}" "${T[@]}" -d '{"customerComment": "Ring twice"}'
+```
+
+The context token is the session: registration, login and logout always answer with a new
+`sw-context-token`, a password change ends the customer's other sessions. Placing an order
+recalculates the cart first and refuses if anything changed; stock is booked in the same
+transaction, so closeout products cannot be oversold.
 
 Carts store only references and quantities and are recalculated on every read; products that
 sold out, were deactivated or changed their purchase rules are adjusted and reported once in

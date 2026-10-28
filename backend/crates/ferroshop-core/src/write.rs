@@ -56,6 +56,24 @@ pub async fn write_many(
     Ok(ids)
 }
 
+/// Like [`write`], inside a transaction the caller commits, so several writes and other
+/// statements (e.g. stock updates during checkout) succeed or fail together.
+pub async fn write_in(
+    tx: &mut Transaction<'static, Postgres>,
+    entity: &str,
+    payload: &Value,
+    mode: WriteMode,
+    ctx: &Context,
+) -> Result<Uuid> {
+    let def = entities::require(entity)?;
+    let mut writer = Writer { tx, ctx, errors: Vec::new() };
+    let id = writer.write_entity(def, payload, mode, String::new()).await?;
+    if !writer.errors.is_empty() {
+        return Err(Error::Validation(writer.errors));
+    }
+    Ok(id)
+}
+
 pub async fn delete(db: &Db, entity: &str, ids: &[String], ctx: &Context) -> Result<()> {
     let def = entities::require(entity)?;
     let mut tx = db.begin().await?;
