@@ -27,7 +27,8 @@ An open-source e-commerce backend written in Rust, modelled on the
 | Store-API: context, products, category listings, search, navigation, master data, calculated prices | ✅ |
 | Store-API: cart (line items, purchase rules, closeout stock, shipping costs, tax totals) | ✅ |
 | Store-API: registration (incl. guests), login, profile, password, e-mail, addresses, checkout, order history | ✅ |
-| Store-API: password recovery, payment handlers, SEO URLs, CMS pages; Shopware Frontends end-to-end | next |
+| SEO URLs: generated per sales channel and language, kept on rename, `/store-api/seo-url`, `sw-include-seo-urls` | ✅ |
+| Store-API: properties & variant configurator, CMS pages, password recovery, mails; Shopware Frontends end-to-end | next |
 
 ## Quick start
 
@@ -40,7 +41,7 @@ docker compose up -d postgres
 cd backend
 cargo run -- migrate
 cargo run -- user:create admin --email admin@example.com --password shopware1
-cargo run -- demo-data
+cargo run -- demo-data      # also generates SEO URLs
 cargo run -- serve          # http://localhost:8000/api
 
 cd ../admin
@@ -109,6 +110,13 @@ The context token is the session: registration, login and logout always answer w
 `sw-context-token`, a password change ends the customer's other sessions. Placing an order
 recalculates the cart first and refuses if anything changed; stock is booked in the same
 transaction, so closeout products cannot be oversold.
+
+SEO URLs follow Shopware's default templates (`Shoes/Sneakers/` for categories below the sales
+channel's navigation root, `Boot/SW-10001` for products) and are updated after every Admin-API
+write to products, categories, sales channels and languages. Renamed entities keep their old
+URL as a non-canonical one, so `/store-api/seo-url` can still resolve it for a redirect; URLs
+marked `isModified` are never regenerated. `ferroshop seo:generate` rebuilds all of them, e.g.
+after an import.
 
 Carts store only references and quantities and are recalculated on every read; products that
 sold out, were deactivated or changed their purchase rules are adjusted and reported once in

@@ -52,7 +52,11 @@ async fn search_in(
 ) -> Result<SearchResult, ApiError> {
     let def = guard::definition(entity);
     guard::check_in(def, &criteria, own)?;
-    guard::restrict(def, &mut criteria);
+    // `sw-include-seo-urls: 1` asks for every product and category to carry its URL.
+    if sc.include_seo_urls && matches!(def.name, "product" | "category") {
+        criteria.associations.entry("seoUrls".into()).or_default();
+    }
+    guard::restrict(def, &mut criteria, sc);
     guard::limit(&mut criteria, default_limit);
     let mut result = read::search_def(&state.db, def, &criteria, &sc.core()).await?;
     pricing::enrich(&state.db, sc, &mut result.data).await?;
@@ -293,6 +297,15 @@ pub async fn payment_methods(
     body: Bytes,
 ) -> Result<Json<Value>, ApiError> {
     search_route(&state, &sc, "payment_method", &body).await
+}
+
+/// `/store-api/seo-url`: resolves storefront paths (`Shoes/Sneakers/`) to categories and products.
+pub async fn seo_urls(
+    State(state): State<StoreState>,
+    Extension(sc): Extension<SalesChannelContext>,
+    body: Bytes,
+) -> Result<Json<Value>, ApiError> {
+    search_route(&state, &sc, "seo_url", &body).await
 }
 
 pub async fn shipping_methods(

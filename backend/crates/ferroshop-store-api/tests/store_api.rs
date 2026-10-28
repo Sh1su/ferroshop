@@ -678,3 +678,93 @@ async fn guests_can_order_without_an_account(db: Db) {
     assert_eq!(order.body["shippingAddress"]["country"]["iso"], "AT");
     assert_ne!(order.body["billingAddressId"], order.body["shippingAddressId"]);
 }
+
+async fn seo_url(store: &Store, path: &str) -> Value {
+    let criteria = json!({ "filter": [{ "type": "equals", "field": "seoPathInfo", "value": path }] });
+    let reply = store.post("/store-api/seo-url", criteria).await;
+    assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
+    reply.body["elements"].get(0).cloned().unwrap_or(Value::Null)
+}
+
+#[sqlx::test(migrator = "ferroshop_core::MIGRATOR")]
+async fn seo_urls_are_generated_kept_and_resolved(db: Db) {
+    use ferroshop_core::seo::{self, Scope};
+    let store = Store::new(db.clone());
+    let catalog = catalog(&db).await;
+    seo::update(&db, Scope::All).await.unwrap();
+
+    let sneakers = seo_url(&store, "Shoes/Sneakers/").await;
+    assert_eq!(sneakers["foreignKey"], catalog.sneakers);
+    assert_eq!(sneakers["routeName"], "frontend.navigation.page");
+    assert_eq!(sneakers["pathInfo"], format!("/navigation/{}", catalog.sneakers));
+    assert_eq!(sneakers["isCanonical"], true);
+    assert_eq!(seo_url(&store, "Boot/B-1").await["foreignKey"], catalog.boot);
+    assert_eq!(seo_url(&store, "Sneaker-red/S-1-1").await["foreignKey"], catalog.variant, "variants have their own");
+    assert_eq!(seo_url(&store, "Hidden/").await["foreignKey"], catalog.hidden_category);
+
+    // Entities carry their canonical URL when asked to.
+    let request = |uri: &str, body: Value| {
+        Request::post(uri)
+            .header("sw-access-key", ACCESS_KEY)
+            .header("sw-include-seo-urls", "true")
+            .header("content-type", "application/json")
+            .body(Body::from(body.to_string()))
+            .unwrap()
+    };
+    let read = |request: Request<Body>| async {
+        let response = store.app.clone().oneshot(request).await.unwrap();
+        let bytes = response.into_body().collect().await.unwrap().to_bytes();
+        serde_json::from_slice::<Value>(&bytes).unwrap()
+    };
+    let listing = read(request(&format!("/store-api/product-listing/{}", catalog.shoes), json!({}))).await;
+    assert_eq!(listing["elements"][0]["seoUrls"][0]["seoPathInfo"], "Boot/B-1");
+    let navigation = read(request("/store-api/navigation/main-navigation/main-navigation", json!({}))).await;
+    assert_eq!(navigation[0]["children"][0]["seoUrls"][0]["seoPathInfo"], "Shoes/Sneakers/");
+    let plain = store.post(&format!("/store-api/product/{}", catalog.boot), json!({})).await;
+    assert!(plain.body["product"].get("seoUrls").is_none());
+
+    // Renaming moves the canonical URL (sub-categories too); old URLs still resolve.
+    let ctx = Context::default();
+    write::write(&db, "category", &json!({ "id": catalog.shoes, "name": "Footwear" }), WriteMode::Update, &ctx)
+        .await
+        .unwrap();
+    seo::update(&db, Scope::Categories(vec![id::parse(&catalog.shoes).unwrap()])).await.unwrap();
+    assert_eq!(seo_url(&store, "Footwear/Sneakers/").await["isCanonical"], true);
+    let old = seo_url(&store, "Shoes/Sneakers/").await;
+    assert_eq!((old["foreignKey"].clone(), old["isCanonical"].clone()), (json!(catalog.sneakers), json!(false)));
+
+    // Same name under the same parent: the second one is numbered.
+    let root = id::format(defaults::ROOT_CATEGORY);
+    let twin = create(&db, "category", json!({ "parentId": root, "name": "Footwear" })).await;
+    seo::update(&db, Scope::Categories(vec![id::parse(&twin).unwrap()])).await.unwrap();
+    assert_eq!(seo_url(&store, "Footwear-2/").await["foreignKey"], twin);
+
+    // Hand-edited URLs are left alone.
+    sqlx::query("UPDATE seo_url SET seo_path_info = 'boots', is_modified = true WHERE seo_path_info = 'Boot/B-1'")
+        .execute(&db)
+        .await
+        .unwrap();
+    write::write(&db, "product", &json!({ "id": catalog.boot, "name": "Winter boot" }), WriteMode::Update, &ctx)
+        .await
+        .unwrap();
+    seo::update(&db, Scope::Products(vec![id::parse(&catalog.boot).unwrap()])).await.unwrap();
+    assert_eq!(seo_url(&store, "boots").await["isCanonical"], true);
+    assert_eq!(seo_url(&store, "Winter-boot/B-1").await, Value::Null);
+
+    // Deleting a product removes its URLs and those of its variants.
+    let sneaker = id::parse(&catalog.sneaker).unwrap();
+    let affected = seo::with_descendants(&db, "product", &[sneaker]).await.unwrap();
+    write::delete(&db, "product", std::slice::from_ref(&catalog.sneaker), &ctx).await.unwrap();
+    seo::update(&db, Scope::Products(affected)).await.unwrap();
+    assert_eq!(seo_url(&store, "Sneaker/S-1").await, Value::Null);
+    assert_eq!(seo_url(&store, "Sneaker-red/S-1-1").await, Value::Null);
+
+    // URLs belong to their sales channel and language.
+    let de = store.send(Method::GET, "/store-api/context", None, None).await.token.unwrap();
+    store
+        .with(Method::PATCH, "/store-api/context", &de, json!({ "languageId": id::format(defaults::LANGUAGE_DE) }))
+        .await;
+    let criteria = json!({ "filter": [{ "type": "equals", "field": "languageId", "value": id::format(defaults::LANGUAGE_SYSTEM) }] });
+    let foreign = store.with(Method::POST, "/store-api/seo-url", &de, criteria).await;
+    assert_eq!(foreign.body["total"], 0);
+}

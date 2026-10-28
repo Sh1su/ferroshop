@@ -350,3 +350,33 @@ async fn media_upload_and_delivery(db: Db) {
     assert_eq!(api.call(Method::GET, thumb, None, None).await.status, StatusCode::OK);
     assert_eq!(api.call(Method::GET, "/media/../etc/passwd.png", None, None).await.status, StatusCode::NOT_FOUND);
 }
+
+#[sqlx::test(migrator = "ferroshop_core::MIGRATOR")]
+async fn catalogue_writes_keep_seo_urls_current(db: Db) {
+    let api = Api::new(db.clone());
+    user(&db, "admin", true).await;
+    let token = api.token("admin").await;
+    let paths = |db: Db| async move {
+        sqlx::query_scalar::<_, String>(
+            "SELECT DISTINCT seo_path_info FROM seo_url WHERE is_canonical ORDER BY seo_path_info",
+        )
+        .fetch_all(&db)
+        .await
+        .unwrap()
+    };
+
+    let body = json!({ "parentId": id::format(ferroshop_core::defaults::ROOT_CATEGORY), "name": "Garden Tools" });
+    let created = api.call(Method::POST, "/api/category?_response=1", Some(&token), Some(body)).await;
+    assert_eq!(created.status, StatusCode::OK);
+    let category = created.json()["data"]["id"].as_str().unwrap().to_string();
+    assert_eq!(paths(db.clone()).await, ["Garden-Tools/"]);
+
+    let rename = json!({ "name": "Garden" });
+    api.call(Method::PATCH, &format!("/api/category/{category}"), Some(&token), Some(rename)).await;
+    assert_eq!(paths(db.clone()).await, ["Garden/"]);
+
+    api.call(Method::DELETE, &format!("/api/category/{category}"), Some(&token), None).await;
+    assert!(paths(db.clone()).await.is_empty());
+    let left: i64 = sqlx::query_scalar("SELECT count(*) FROM seo_url").fetch_one(&db).await.unwrap();
+    assert_eq!(left, 0, "old URLs of deleted entities are removed too");
+}

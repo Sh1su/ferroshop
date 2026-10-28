@@ -4,8 +4,10 @@
 
 use ferroshop_admin_api::ApiError;
 use ferroshop_core::criteria::Filter;
-use ferroshop_core::{Criteria, EntityDefinition, FieldKind, entities};
+use ferroshop_core::{Criteria, EntityDefinition, FieldKind, entities, id};
 use serde_json::Value;
+
+use crate::SalesChannelContext;
 
 /// Hard upper bound for one Store-API page.
 pub const MAX_LIMIT: u64 = 100;
@@ -22,6 +24,7 @@ const PUBLIC: &[&str] = &[
     "country",
     "payment_method",
     "shipping_method",
+    "seo_url",
 ];
 
 /// What a logged-in customer may additionally read, always filtered to their own records.
@@ -108,25 +111,46 @@ pub fn check_in(def: &'static EntityDefinition, criteria: &Criteria, own: bool) 
     Ok(())
 }
 
-fn visibility(def: &EntityDefinition) -> Option<Filter> {
+fn equals(field: &str, value: Value) -> Filter {
+    Filter::Equals { field: field.into(), value }
+}
+
+fn visibility(def: &EntityDefinition, sc: &SalesChannelContext, nested: bool) -> Vec<Filter> {
     match def.name {
         "product" | "category" | "country" | "payment_method" | "shipping_method" => {
-            Some(Filter::Equals { field: "active".into(), value: Value::Bool(true) })
+            vec![equals("active", Value::Bool(true))]
         }
-        _ => None,
+        // URLs of this sales channel and language; entities carry only their canonical URL,
+        // while `/seo-url` also finds old ones (for redirects).
+        "seo_url" => {
+            let mut filters = vec![
+                equals("salesChannelId", Value::String(id::format(sc.sales_channel_id))),
+                equals("languageId", Value::String(id::format(sc.language_id))),
+                equals("isDeleted", Value::Bool(false)),
+            ];
+            if nested {
+                filters.push(equals("isCanonical", Value::Bool(true)));
+            }
+            filters
+        }
+        _ => Vec::new(),
     }
 }
 
 /// Adds visibility filters to the criteria and every loaded association. Call after [`check_in`].
-pub fn restrict(def: &'static EntityDefinition, criteria: &mut Criteria) {
-    criteria.filter.extend(visibility(def));
-    let mut nested = criteria.nested_associations();
-    for (name, sub) in nested.iter_mut() {
+pub fn restrict(def: &'static EntityDefinition, criteria: &mut Criteria, sc: &SalesChannelContext) {
+    restrict_at(def, criteria, sc, false);
+}
+
+fn restrict_at(def: &'static EntityDefinition, criteria: &mut Criteria, sc: &SalesChannelContext, nested: bool) {
+    criteria.filter.extend(visibility(def, sc, nested));
+    let mut associations = criteria.nested_associations();
+    for (name, sub) in associations.iter_mut() {
         if let Some(target) = association_target(def, name) {
-            restrict(target, sub);
+            restrict_at(target, sub, sc, true);
         }
     }
-    criteria.associations = nested;
+    criteria.associations = associations;
 }
 
 /// Applies the Store-API page size: `default` when none is given, never more than [`MAX_LIMIT`].

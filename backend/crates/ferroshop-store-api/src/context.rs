@@ -32,6 +32,8 @@ pub struct SalesChannelContext {
     pub price: PriceContext,
     /// The logged-in (or guest) customer.
     pub customer_id: Option<Uuid>,
+    /// `sw-include-seo-urls`: products and categories carry their `seoUrls`.
+    pub include_seo_urls: bool,
 }
 
 impl SalesChannelContext {
@@ -159,6 +161,7 @@ async fn load(
             Some(row) => Some(row.try_get("id")?),
             None => None,
         },
+        include_seo_urls: false,
     })
 }
 
@@ -167,8 +170,10 @@ pub async fn resolve(State(state): State<StoreState>, mut request: Request, next
     let headers = request.headers();
     let header = |name: &str| headers.get(name).and_then(|v| v.to_str().ok()).map(str::to_string);
     let (access_key, token, language) = (header("sw-access-key"), header(CONTEXT_TOKEN), header("sw-language-id"));
+    let seo = header("sw-include-seo-urls").is_some_and(|v| v == "1" || v.eq_ignore_ascii_case("true"));
     let access_key = access_key.ok_or(ApiError::Unauthorized("missing sw-access-key"))?;
-    let ctx = load(&state.db, &access_key, token.as_deref(), language.as_deref()).await?;
+    let mut ctx = load(&state.db, &access_key, token.as_deref(), language.as_deref()).await?;
+    ctx.include_seo_urls = seo;
     let token = HeaderValue::from_str(&ctx.token).expect("hex token");
     request.extensions_mut().insert(ctx);
     let mut response = next.run(request).await;

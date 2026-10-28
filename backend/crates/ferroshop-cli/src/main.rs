@@ -70,6 +70,9 @@ enum Command {
     /// Fills the shop with demo manufacturers, categories, products, customers and orders.
     #[command(name = "demo-data")]
     DemoData,
+    /// Rebuilds the SEO URLs of all categories and products (keeps hand-edited ones).
+    #[command(name = "seo:generate")]
+    SeoGenerate,
 }
 
 #[tokio::main]
@@ -133,7 +136,14 @@ async fn main() -> anyhow::Result<()> {
         }
         Command::DemoData => {
             let count = demo::run(&db).await.map_err(describe)?;
+            ferroshop_core::seo::update(&db, ferroshop_core::seo::Scope::All).await.map_err(describe)?;
             println!("created {count} demo products");
+        }
+        Command::SeoGenerate => {
+            ferroshop_core::seo::update(&db, ferroshop_core::seo::Scope::All).await.map_err(describe)?;
+            let count: i64 =
+                sqlx::query_scalar("SELECT count(*) FROM seo_url WHERE is_canonical").fetch_one(&db).await?;
+            println!("{count} canonical SEO URLs");
         }
     }
     Ok(())

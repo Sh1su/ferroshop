@@ -14,6 +14,7 @@ pub mod password;
 pub mod price;
 pub mod read;
 pub mod schema;
+pub mod seo;
 mod sql;
 pub mod write;
 

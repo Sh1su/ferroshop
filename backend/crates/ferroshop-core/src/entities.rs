@@ -62,6 +62,7 @@ entity! {
         many_to_one("parent", "category", "parentId"),
         one_to_many("children", "category", "parentId"),
         many_to_many("products", "product", "product_category", "category_id", "product_id"),
+        one_to_many("seoUrls", "seo_url", "foreignKey"),
     }
 }
 
@@ -153,6 +154,7 @@ entity! {
         fk("coverId", "cover_id", "product_media"),
         many_to_one("cover", "product_media", "coverId"),
         one_to_many("media", "product_media", "productId"),
+        one_to_many("seoUrls", "seo_url", "foreignKey"),
     }
 }
 
@@ -417,6 +419,26 @@ entity! {
     }
 }
 
+entity! {
+    pub static SEO_URL = "seo_url" in "seo_url" {
+        id("id"),
+        fk("salesChannelId", "sales_channel_id", "sales_channel") [REQUIRED],
+        fk("languageId", "language_id", "language") [REQUIRED],
+        // A category or product id, depending on `routeName`; hence no single target entity.
+        fk("foreignKey", "foreign_key", "") [REQUIRED],
+        string("routeName", "route_name") [REQUIRED],
+        string("pathInfo", "path_info") [REQUIRED],
+        string("seoPathInfo", "seo_path_info") [REQUIRED | SEARCHABLE],
+        bool("isCanonical", "is_canonical"),
+        bool("isModified", "is_modified"),
+        bool("isDeleted", "is_deleted"),
+        datetime("createdAt", "created_at") [READ_ONLY],
+        datetime("updatedAt", "updated_at") [READ_ONLY],
+        many_to_one("salesChannel", "sales_channel", "salesChannelId"),
+        many_to_one("language", "language", "languageId"),
+    }
+}
+
 pub static ALL: &[&EntityDefinition] = &[
     &LANGUAGE,
     &CURRENCY,
@@ -439,6 +461,7 @@ pub static ALL: &[&EntityDefinition] = &[
     &ORDER_LINE_ITEM,
     &MEDIA,
     &PRODUCT_MEDIA,
+    &SEO_URL,
 ];
 
 /// Looks an entity up by its snake_case or kebab-case name.

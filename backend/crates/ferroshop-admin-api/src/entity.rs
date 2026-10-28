@@ -6,7 +6,7 @@ use axum::extract::{Extension, Path, Query, State};
 use axum::http::{HeaderMap, HeaderValue, StatusCode, header};
 use axum::response::{IntoResponse, Response};
 use ferroshop_core::write::{self, WriteMode};
-use ferroshop_core::{Context, Criteria, entities, id, read, schema};
+use ferroshop_core::{Context, Criteria, entities, id, read, schema, seo};
 use serde::Deserialize;
 use serde_json::{Map, Value, json};
 
@@ -141,6 +141,7 @@ pub async fn create(
     permission::require(&perms, def.name, Action::Create)?;
     permission::require_write(&perms, def, &payload)?;
     let entity_id = write::write(&state.db, &entity, &payload, WriteMode::Create, &ctx).await?;
+    refresh_seo(&state, def.name, vec![entity_id]).await;
     write_response(&state, &entity, entity_id, &ctx, &query).await
 }
 
@@ -170,6 +171,7 @@ pub async fn update(
     if changes_password {
         auth::revoke_refresh_tokens(&state.db, entity_id).await?;
     }
+    refresh_seo(&state, def.name, vec![entity_id]).await;
     write_response(&state, &entity, entity_id, &ctx, &query).await
 }
 
@@ -187,8 +189,28 @@ pub async fn remove(
         return Err(ApiError::BadRequest("you cannot delete your own account".into()));
     }
     permission::require_target(&state.db, &perms, def, &entity_id).await?;
+    // Variants and sub-categories are deleted along with their parent; their URLs go too.
+    let affected = match (def.name, id::parse(&entity_id)) {
+        ("product" | "category", Some(uuid)) => seo::with_descendants(&state.db, def.table, &[uuid]).await?,
+        _ => Vec::new(),
+    };
     write::delete(&state.db, &entity, &[entity_id], &ctx).await?;
+    refresh_seo(&state, def.name, affected).await;
     Ok(StatusCode::NO_CONTENT)
+}
+
+/// Keeps SEO URLs in step with catalogue changes. A failure is logged; the write itself stands
+/// and `ferroshop seo:generate` repairs the URLs.
+async fn refresh_seo(state: &AppState, entity: &str, ids: Vec<uuid::Uuid>) {
+    let scope = match entity {
+        "product" => seo::Scope::Products(ids),
+        "category" => seo::Scope::Categories(ids),
+        "sales_channel" | "language" => seo::Scope::All,
+        _ => return,
+    };
+    if let Err(err) = seo::update(&state.db, scope).await {
+        tracing::warn!(error = %err, entity, "updating SEO URLs failed");
+    }
 }
 
 pub async fn remove_mapping(

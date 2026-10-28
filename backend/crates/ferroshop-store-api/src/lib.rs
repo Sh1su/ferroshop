@@ -59,6 +59,7 @@ pub fn router(state: StoreState) -> Router {
         .route("/account/address/{id}", patch(account::update_address).delete(account::delete_address))
         .route("/account/address/default-billing/{id}", patch(account::default_billing))
         .route("/account/address/default-shipping/{id}", patch(account::default_shipping))
+        .route("/seo-url", post(catalog::seo_urls).get(catalog::seo_urls))
         .route("/currency", post(catalog::currencies).get(catalog::currencies))
         .route("/language", post(catalog::languages).get(catalog::languages))
         .route("/country", post(catalog::countries).get(catalog::countries))
