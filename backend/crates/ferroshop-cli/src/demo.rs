@@ -4,6 +4,7 @@ use ferroshop_core::order_state::{self, Machine};
 use ferroshop_core::write::{self, WriteMode};
 use ferroshop_core::{Context, Db, Result, defaults, id};
 use serde_json::{Value, json};
+use uuid::Uuid;
 
 fn price(gross: f64) -> Value {
     let net = (gross / 1.19 * 100.0).round() / 100.0;
@@ -30,6 +31,8 @@ pub async fn run(db: &Db) -> Result<usize> {
         manufacturers.push(id::format(mid));
     }
 
+    let (sizes, colors, cotton) = properties(db, &ctx).await?;
+
     let items = [
         ("T-Shirt Ferris", "T-Shirt Ferris", 19.99, 0),
         ("Hoodie Borrow Checker", "Hoodie Borrow Checker", 49.90, 0),
@@ -52,24 +55,64 @@ pub async fn run(db: &Db) -> Result<usize> {
             "manufacturerId": manufacturers[i % manufacturers.len()],
             "price": price(*gross),
             "categories": [{ "id": categories[*cat] }],
+            "properties": if *cat == 0 { json!([{ "id": id::format(cotton) }]) } else { json!([]) },
         });
         let pid = write::write(db, "product", &product, WriteMode::Create, &ctx).await?;
         catalog.push((pid, *en, *gross));
         count += 1;
         if *cat == 0 {
-            for size in ["S", "M", "L"] {
-                let variant = json!({
-                    "parentId": id::format(pid),
-                    "productNumber": format!("FS-{:05}.{size}", 10001 + i),
-                    "stock": 10,
-                });
-                write::write(db, "product", &variant, WriteMode::Create, &ctx).await?;
-                count += 1;
+            // Clothing comes in sizes, the T-shirt also in colours.
+            let mut options = sizes.clone();
+            if i == 0 {
+                options.extend(colors.iter().copied());
             }
+            let variants = ferroshop_core::variants::generate(db, pid, &options, &ctx).await?;
+            for variant in &variants {
+                let stock = json!({ "id": id::format(*variant), "stock": 10 });
+                write::write(db, "product", &stock, WriteMode::Update, &ctx).await?;
+            }
+            count += variants.len();
         }
     }
     customers_and_orders(db, &catalog).await?;
     Ok(count)
+}
+
+/// Size and colour groups for variants, a material group as a plain (filterable) property.
+async fn properties(db: &Db, ctx: &Context) -> Result<(Vec<Uuid>, Vec<Uuid>, Uuid)> {
+    let de = id::format(defaults::LANGUAGE_DE);
+    let group = |name: &str, de_name: &str, display: &str, sorting: &str, options: Vec<(&str, &str, Option<&str>)>| {
+        let options: Vec<Value> = options
+            .iter()
+            .enumerate()
+            .map(|(position, (en, de_option, color))| {
+                json!({ "name": en, "translations": { de.clone(): { "name": de_option } },
+                        "position": position + 1, "colorHexCode": color })
+            })
+            .collect();
+        json!({ "name": name, "translations": { de.clone(): { "name": de_name } }, "displayType": display,
+                "sortingType": sorting, "options": options })
+    };
+    let size = group("Size", "Größe", "text", "position", vec![("S", "S", None), ("M", "M", None), ("L", "L", None)]);
+    let color = group(
+        "Colour",
+        "Farbe",
+        "color",
+        "alphanumeric",
+        vec![("Rust", "Rost", Some("#b7410e")), ("Ocean", "Ozean", Some("#1f6f8b"))],
+    );
+    let material = group("Material", "Material", "text", "alphanumeric", vec![("Cotton", "Baumwolle", None)]);
+    let mut ids = Vec::new();
+    for payload in [size, color, material] {
+        let group = write::write(db, "property_group", &payload, WriteMode::Create, ctx).await?;
+        let options: Vec<Uuid> =
+            sqlx::query_scalar("SELECT id FROM property_group_option WHERE group_id = $1 ORDER BY position")
+                .bind(group)
+                .fetch_all(db)
+                .await?;
+        ids.push(options);
+    }
+    Ok((ids[0].clone(), ids[1].clone(), ids[2][0]))
 }
 
 const GERMANY: &str = "0191a6f0f4a07c7e9b1c2d3e4f5a7001";

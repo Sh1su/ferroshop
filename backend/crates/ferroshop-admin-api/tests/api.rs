@@ -380,3 +380,51 @@ async fn catalogue_writes_keep_seo_urls_current(db: Db) {
     let left: i64 = sqlx::query_scalar("SELECT count(*) FROM seo_url").fetch_one(&db).await.unwrap();
     assert_eq!(left, 0, "old URLs of deleted entities are removed too");
 }
+
+#[sqlx::test(migrator = "ferroshop_core::MIGRATOR")]
+async fn variants_are_generated_from_options(db: Db) {
+    let api = Api::new(db.clone());
+    user(&db, "admin", true).await;
+    user_with(&db, "reader", &["product:read", "property_group_option:read"]).await;
+    let token = api.token("admin").await;
+    let group = create(
+        &db,
+        "property_group",
+        json!({ "name": "Size", "options": [{ "name": "S" }, { "name": "M" }, { "name": "L" }] }),
+    )
+    .await;
+    let options: Vec<String> =
+        sqlx::query_scalar::<_, uuid::Uuid>("SELECT id FROM property_group_option WHERE group_id = $1")
+            .bind(id::parse(&group).unwrap())
+            .fetch_all(&db)
+            .await
+            .unwrap()
+            .into_iter()
+            .map(id::format)
+            .collect();
+    let product = create(
+        &db,
+        "product",
+        json!({ "productNumber": "P-1", "name": "Shirt", "stock": 0, "taxId": id::format(ferroshop_core::defaults::TAX_STANDARD),
+                "price": [{ "currencyId": id::format(ferroshop_core::defaults::CURRENCY), "gross": 10, "net": 8.4, "linked": true }] }),
+    )
+    .await;
+    let uri = format!("/api/_action/product/{product}/generate-variants");
+
+    let denied =
+        api.call(Method::POST, &uri, Some(&api.token("reader").await), Some(json!({ "options": options }))).await;
+    assert_eq!(denied.status, StatusCode::FORBIDDEN);
+    let generated = api.call(Method::POST, &uri, Some(&token), Some(json!({ "options": options }))).await;
+    assert_eq!(generated.status, StatusCode::OK, "{:?}", generated.json());
+    assert_eq!(generated.json()["data"].as_array().unwrap().len(), 3);
+    let numbers: Vec<String> =
+        sqlx::query_scalar("SELECT product_number FROM product WHERE parent_id IS NOT NULL ORDER BY product_number")
+            .fetch_all(&db)
+            .await
+            .unwrap();
+    assert_eq!(numbers, ["P-1.1", "P-1.2", "P-1.3"]);
+    let again = api.call(Method::POST, &uri, Some(&token), Some(json!({ "options": options }))).await;
+    assert_eq!(again.json()["data"], json!([]));
+    let unknown = api.call(Method::POST, &uri, Some(&token), Some(json!({ "options": ["0".repeat(32)] }))).await;
+    assert_eq!(unknown.status, StatusCode::BAD_REQUEST);
+}

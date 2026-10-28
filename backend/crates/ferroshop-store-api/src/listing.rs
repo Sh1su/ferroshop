@@ -1,7 +1,7 @@
 //! Product listings: category pages, search and search suggestions (Shopware's `product_listing`).
 //!
 //! Besides a criteria, listings accept Shopware's listing parameters in the query string or body:
-//! `order`, `p`, `limit`, `manufacturer` (ids separated by `|`), `min-price`, `max-price`,
+//! `order`, `p`, `limit`, `manufacturer` and `properties` (ids separated by `|`), `min-price`, `max-price`,
 //! `search` and `no-aggregations`.
 
 use axum::Json;
@@ -16,14 +16,24 @@ use serde_json::{Map, Value, json};
 use uuid::Uuid;
 
 use crate::catalog::search;
-use crate::{SalesChannelContext, StoreState, guard};
+use crate::{SalesChannelContext, StoreState, guard, properties};
 
 const LISTING_LIMIT: u64 = 24;
 const SUGGEST_LIMIT: u64 = 10;
 
 /// Listing parameters; everything else in the request is read as criteria.
-const LISTING_PARAMS: &[&str] =
-    &["order", "p", "page", "limit", "manufacturer", "min-price", "max-price", "search", "no-aggregations"];
+const LISTING_PARAMS: &[&str] = &[
+    "order",
+    "p",
+    "page",
+    "limit",
+    "manufacturer",
+    "properties",
+    "min-price",
+    "max-price",
+    "search",
+    "no-aggregations",
+];
 
 struct Sorting {
     key: &'static str,
@@ -214,7 +224,9 @@ async fn listing(
     }
     current.insert("manufacturer".into(), json!(manufacturers));
     current.insert("price".into(), json!({ "min": min_price, "max": max_price }));
-    current.insert("properties".into(), json!([]));
+    let property_ids = id_list(params.get("properties"));
+    criteria.post_filter.extend(properties::filters(state, &property_ids).await?);
+    current.insert("properties".into(), json!(property_ids));
     current.insert("shipping-free".into(), json!(false));
     current.insert("rating".into(), Value::Null);
 
@@ -234,7 +246,12 @@ async fn listing(
         });
     }
 
+    let property_aggregation =
+        if with_aggregations { Some(properties::aggregation(state, sc, &criteria).await?) } else { None };
     let mut result = search(state, sc, "product", criteria, default_limit).await?;
+    if let Some(aggregation) = property_aggregation {
+        result.aggregations.insert("properties".into(), aggregation);
+    }
     if with_aggregations {
         listing_aggregations(state, sc, &mut result.aggregations, factor).await?;
     }

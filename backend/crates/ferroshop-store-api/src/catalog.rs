@@ -14,7 +14,7 @@ use serde::Deserialize;
 use serde_json::{Value, json};
 use uuid::Uuid;
 
-use crate::{SalesChannelContext, StoreState, guard, pricing};
+use crate::{SalesChannelContext, StoreState, guard, pricing, properties};
 
 /// Default page size for routes that do not define their own.
 const DEFAULT_LIMIT: u64 = 100;
@@ -102,10 +102,9 @@ async fn single(
     sc: &SalesChannelContext,
     entity: &str,
     raw_id: &str,
-    body: &[u8],
+    mut criteria: Criteria,
 ) -> Result<Value, ApiError> {
     let parsed = id::parse(raw_id).ok_or_else(|| not_found(entity, raw_id))?;
-    let mut criteria = guard::criteria(body)?;
     criteria.ids = Some(vec![id::format(parsed)]);
     criteria.page = None;
     search(state, sc, entity, criteria, 1).await?.data.pop().ok_or_else(|| not_found(entity, raw_id))
@@ -126,8 +125,23 @@ pub async fn product(
     Path(product_id): Path<String>,
     body: Bytes,
 ) -> Result<Json<Value>, ApiError> {
-    let product = single(&state, &sc, "product", &product_id, &body).await?;
-    Ok(Json(json!({ "product": product, "configurator": [], "apiAlias": "product_detail" })))
+    let parsed = id::parse(&product_id).ok_or_else(|| not_found("product", &product_id))?;
+    let mut criteria = guard::criteria(&body)?;
+    // Variant options name the variant on the product page.
+    criteria.associations.entry("options".into()).or_default().associations.entry("group".into()).or_default();
+    let wants_properties = criteria
+        .includes
+        .as_ref()
+        .and_then(|i| i.get("product"))
+        .is_none_or(|fields| fields.iter().any(|f| f == "sortedProperties"));
+    let mut product = single(&state, &sc, "product", &product_id, criteria).await?;
+    // Configurator and properties need ids that `includes` may have stripped.
+    let raw = single(&state, &sc, "product", &id::format(parsed), Criteria::default()).await?;
+    let configurator = properties::configurator(&state, &sc, &raw).await?;
+    if wants_properties {
+        product["sortedProperties"] = properties::sorted_properties(&state, &sc, &raw).await?;
+    }
+    Ok(Json(json!({ "product": product, "configurator": configurator, "apiAlias": "product_detail" })))
 }
 
 pub async fn categories(
@@ -156,7 +170,7 @@ pub async fn category(
     body: Bytes,
 ) -> Result<Json<Value>, ApiError> {
     let category_id = id::format(category_id(&sc, &raw_id)?);
-    Ok(Json(single(&state, &sc, "category", &category_id, &body).await?))
+    Ok(Json(single(&state, &sc, "category", &category_id, guard::criteria(&body)?).await?))
 }
 
 #[derive(Debug, Deserialize)]

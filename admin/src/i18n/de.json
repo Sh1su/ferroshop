@@ -62,7 +62,11 @@
     "cover": "Titelbild",
     "setCover": "Als Titelbild",
     "noImages": "Noch keine Bilder.",
-    "addImages": "Bilder hinzufügen"
+    "addImages": "Bilder hinzufügen",
+    "properties": "Eigenschaften",
+    "variantOptions": "Ausprägungen",
+    "generateVariants": "Varianten generieren",
+    "variantsGenerated": "{count} Varianten angelegt."
   },
   "errors": {
     "FRAMEWORK__WRITE_CONSTRAINT_VIOLATION": "Dieses Feld ist ein Pflichtfeld.",
@@ -93,7 +97,9 @@
     "customerGroups": "Kundengruppen",
     "salesChannels": "Verkaufskanäle",
     "users": "Benutzer",
-    "roles": "Rollen"
+    "roles": "Rollen",
+    "properties": "Eigenschaften",
+    "propertyOptions": "Eigenschaftswerte"
   },
   "fields": {
     "name": "Name",
@@ -152,7 +158,13 @@
     "street": "Straße",
     "zipcode": "PLZ",
     "city": "Ort",
-    "country": "Land"
+    "country": "Land",
+    "displayType": "Darstellung",
+    "sortingType": "Sortierung",
+    "filterable": "Filterbar",
+    "visibleOnProductDetailPage": "Auf Produktseite anzeigen",
+    "colorHexCode": "Farbe (Hex)",
+    "propertyGroup": "Eigenschaft"
   },
   "states": {
     "open": "Offen",
@@ -203,7 +215,10 @@
     "sales_channel": "Verkaufskanäle",
     "user": "Benutzer",
     "acl_role": "Rollen",
-    "integration": "Integrationen"
+    "integration": "Integrationen",
+    "property_group": "Eigenschaften",
+    "property_group_option": "Eigenschaftswerte",
+    "seo_url": "SEO-URLs"
   },
   "order": {
     "title": "Bestellung {number}",

@@ -18,6 +18,7 @@ export type OrderAddress = Schemas['OrderAddress']
 export type Media = Schemas['Media']
 export type ProductMedia = Schemas['ProductMedia']
 export type AclRole = Schemas['AclRole']
+export type PropertyGroupOption = Schemas['PropertyGroupOption']
 
 export interface SearchResult<T> {
   total: number
@@ -177,6 +178,10 @@ export function repository<T extends { id?: string }>(entity: string) {
 
 export type Action = 'read' | 'create' | 'update' | 'delete'
 export type Me = User & { admin: boolean; aclPrivileges: string[]; permissions: Record<string, Action[]> }
+
+/** Creates the missing variants for every combination of the options (one per property group). */
+export const generateVariants = async (productId: string, options: string[]) =>
+  (await request<{ data: string[] }>('POST', `/_action/product/${productId}/generate-variants`, { options })).data
 
 export const me = async () => (await request<{ data: Me }>('GET', '/_info/me')).data
 export const updateMe = (payload: Record<string, unknown>) => request<void>('PATCH', '/_info/me', payload)

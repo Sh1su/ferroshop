@@ -25,6 +25,8 @@ const PUBLIC: &[&str] = &[
     "payment_method",
     "shipping_method",
     "seo_url",
+    "property_group",
+    "property_group_option",
 ];
 
 /// What a logged-in customer may additionally read, always filtered to their own records.

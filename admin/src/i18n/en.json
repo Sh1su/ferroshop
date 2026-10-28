@@ -62,7 +62,11 @@
     "cover": "Cover",
     "setCover": "Use as cover",
     "noImages": "No images yet.",
-    "addImages": "Add images"
+    "addImages": "Add images",
+    "properties": "Properties",
+    "variantOptions": "Options",
+    "generateVariants": "Generate variants",
+    "variantsGenerated": "{count} variants created."
   },
   "errors": {
     "FRAMEWORK__WRITE_CONSTRAINT_VIOLATION": "This field is required.",
@@ -93,7 +97,9 @@
     "customerGroups": "Customer groups",
     "salesChannels": "Sales channels",
     "users": "Users",
-    "roles": "Roles"
+    "roles": "Roles",
+    "properties": "Properties",
+    "propertyOptions": "Property values"
   },
   "fields": {
     "name": "Name",
@@ -152,7 +158,13 @@
     "street": "Street",
     "zipcode": "Postal code",
     "city": "City",
-    "country": "Country"
+    "country": "Country",
+    "displayType": "Display type",
+    "sortingType": "Sorting",
+    "filterable": "Filterable",
+    "visibleOnProductDetailPage": "Visible on product page",
+    "colorHexCode": "Colour (hex)",
+    "propertyGroup": "Property"
   },
   "states": {
     "open": "Open",
@@ -203,7 +215,10 @@
     "sales_channel": "Sales channels",
     "user": "Users",
     "acl_role": "Roles",
-    "integration": "Integrations"
+    "integration": "Integrations",
+    "property_group": "Properties",
+    "property_group_option": "Property values",
+    "seo_url": "SEO URLs"
   },
   "order": {
     "title": "Order {number}",

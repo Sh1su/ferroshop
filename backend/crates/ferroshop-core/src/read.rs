@@ -106,6 +106,28 @@ pub fn search_def<'a>(
     })
 }
 
+/// Ids of rows matching the criteria's filters and term, ignoring post filters (like
+/// aggregations do), at most `limit`. For aggregations the SQL layer cannot express, such as
+/// the property options of all products in a listing.
+pub async fn matching_ids(
+    db: &Db,
+    entity: &str,
+    criteria: &Criteria,
+    ctx: &Context,
+    limit: u64,
+) -> Result<Vec<String>> {
+    let def = entities::require(entity)?;
+    let alias = "t0";
+    let mut binds = Binds::new(ctx);
+    let where_sql = sql::where_clause(&mut binds, def, alias, criteria, ctx, false)?;
+    let query = format!(
+        "SELECT replace({alias}.id::text, '-', '') AS id FROM {} {alias} WHERE {where_sql} LIMIT {limit}",
+        def.table
+    );
+    let rows = binds.query(&query).fetch_all(db).await?;
+    rows.into_iter().map(|r| r.try_get::<String, _>("id").map_err(Into::into)).collect()
+}
+
 async fn aggregate(
     db: &Db,
     def: &'static EntityDefinition,

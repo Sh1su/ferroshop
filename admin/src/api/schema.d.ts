@@ -580,6 +580,70 @@ export interface paths {
         patch: operations["updateProduct"];
         trace?: never;
     };
+    "/property-group": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listPropertyGroup"];
+        put?: never;
+        post: operations["createPropertyGroup"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/property-group-option": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listPropertyGroupOption"];
+        put?: never;
+        post: operations["createPropertyGroupOption"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/property-group-option/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPropertyGroupOption"];
+        put?: never;
+        post?: never;
+        delete: operations["deletePropertyGroupOption"];
+        options?: never;
+        head?: never;
+        patch: operations["updatePropertyGroupOption"];
+        trace?: never;
+    };
+    "/property-group/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPropertyGroup"];
+        put?: never;
+        post?: never;
+        delete: operations["deletePropertyGroup"];
+        options?: never;
+        head?: never;
+        patch: operations["updatePropertyGroup"];
+        trace?: never;
+    };
     "/sales-channel": {
         parameters: {
             query?: never;
@@ -884,6 +948,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/search/property-group": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["searchPropertyGroup"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/search/property-group-option": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["searchPropertyGroupOption"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/search/sales-channel": {
         parameters: {
             query?: never;
@@ -894,6 +990,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["searchSalesChannel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/search/seo-url": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["searchSeoUrl"];
         delete?: never;
         options?: never;
         head?: never;
@@ -946,6 +1058,38 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/seo-url": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listSeoUrl"];
+        put?: never;
+        post: operations["createSeoUrl"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/seo-url/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getSeoUrl"];
+        put?: never;
+        post?: never;
+        delete: operations["deleteSeoUrl"];
+        options?: never;
+        head?: never;
+        patch: operations["updateSeoUrl"];
         trace?: never;
     };
     "/shipping-method": {
@@ -1081,6 +1225,7 @@ export interface components {
             parentId?: string;
             position?: number;
             products?: components["schemas"]["Product"][];
+            seoUrls?: components["schemas"]["SeoUrl"][];
             readonly translated?: {
                 customFields?: {
                     [key: string]: unknown;
@@ -1398,6 +1543,7 @@ export interface components {
         Product: {
             active?: boolean;
             categories?: components["schemas"]["Category"][];
+            readonly cheapestGross?: number;
             readonly childCount?: number;
             children?: components["schemas"]["Product"][];
             cover?: components["schemas"]["ProductMedia"];
@@ -1424,13 +1570,16 @@ export interface components {
             metaTitle?: string;
             minPurchase?: number;
             name: string;
+            options?: components["schemas"]["PropertyGroupOption"][];
             parent?: components["schemas"]["Product"];
             parentId?: string;
             price: components["schemas"]["Price"][];
             productNumber: string;
+            properties?: components["schemas"]["PropertyGroupOption"][];
             purchaseSteps?: number;
             /** Format: date-time */
             releaseDate?: string;
+            seoUrls?: components["schemas"]["SeoUrl"][];
             shippingFree?: boolean;
             stock: number;
             tax?: components["schemas"]["Tax"];
@@ -1485,9 +1634,47 @@ export interface components {
             /** Format: date-time */
             readonly updatedAt?: string;
         };
+        PropertyGroup: {
+            /** Format: date-time */
+            readonly createdAt?: string;
+            description?: string;
+            displayType?: string;
+            filterable?: boolean;
+            id?: string;
+            name: string;
+            options?: components["schemas"]["PropertyGroupOption"][];
+            position?: number;
+            sortingType?: string;
+            readonly translated?: {
+                description?: string;
+                name?: string;
+            };
+            /** Format: date-time */
+            readonly updatedAt?: string;
+            visibleOnProductDetailPage?: boolean;
+        };
+        PropertyGroupOption: {
+            colorHexCode?: string;
+            /** Format: date-time */
+            readonly createdAt?: string;
+            group?: components["schemas"]["PropertyGroup"];
+            groupId: string;
+            id?: string;
+            media?: components["schemas"]["Media"];
+            mediaId?: string;
+            name: string;
+            position?: number;
+            readonly translated?: {
+                name?: string;
+            };
+            /** Format: date-time */
+            readonly updatedAt?: string;
+        };
         SalesChannel: {
             accessKey: string;
             active?: boolean;
+            country?: components["schemas"]["Country"];
+            countryId?: string;
             /** Format: date-time */
             readonly createdAt?: string;
             currency?: components["schemas"]["Currency"];
@@ -1495,12 +1682,18 @@ export interface components {
             customFields?: {
                 [key: string]: unknown;
             };
+            customerGroup?: components["schemas"]["CustomerGroup"];
+            customerGroupId?: string;
             id?: string;
             language?: components["schemas"]["Language"];
             languageId: string;
             name: string;
             navigationCategory?: components["schemas"]["Category"];
             navigationCategoryId?: string;
+            paymentMethod?: components["schemas"]["PaymentMethod"];
+            paymentMethodId?: string;
+            shippingMethod?: components["schemas"]["ShippingMethod"];
+            shippingMethodId?: string;
             readonly translated?: {
                 customFields?: {
                     [key: string]: unknown;
@@ -1508,6 +1701,24 @@ export interface components {
                 name?: string;
             };
             typeId?: string;
+            /** Format: date-time */
+            readonly updatedAt?: string;
+        };
+        SeoUrl: {
+            /** Format: date-time */
+            readonly createdAt?: string;
+            foreignKey: string;
+            id?: string;
+            isCanonical?: boolean;
+            isDeleted?: boolean;
+            isModified?: boolean;
+            language?: components["schemas"]["Language"];
+            languageId: string;
+            pathInfo: string;
+            routeName: string;
+            salesChannel?: components["schemas"]["SalesChannel"];
+            salesChannelId: string;
+            seoPathInfo: string;
             /** Format: date-time */
             readonly updatedAt?: string;
         };
@@ -4882,6 +5093,388 @@ export interface operations {
             };
         };
     };
+    listPropertyGroup: {
+        parameters: {
+            query?: {
+                limit?: number;
+                page?: number;
+                term?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        aggregations?: Record<string, never>;
+                        data?: components["schemas"]["PropertyGroup"][];
+                        total?: number;
+                    };
+                };
+            };
+        };
+    };
+    createPropertyGroup: {
+        parameters: {
+            query?: {
+                /** @description Return the written entity instead of 204. */
+                _response?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PropertyGroup"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["PropertyGroup"];
+                    };
+                };
+            };
+            /** @description Created */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    listPropertyGroupOption: {
+        parameters: {
+            query?: {
+                limit?: number;
+                page?: number;
+                term?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        aggregations?: Record<string, never>;
+                        data?: components["schemas"]["PropertyGroupOption"][];
+                        total?: number;
+                    };
+                };
+            };
+        };
+    };
+    createPropertyGroupOption: {
+        parameters: {
+            query?: {
+                /** @description Return the written entity instead of 204. */
+                _response?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PropertyGroupOption"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["PropertyGroupOption"];
+                    };
+                };
+            };
+            /** @description Created */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    getPropertyGroupOption: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["PropertyGroupOption"];
+                    };
+                };
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    deletePropertyGroupOption: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    updatePropertyGroupOption: {
+        parameters: {
+            query?: {
+                /** @description Return the written entity instead of 204. */
+                _response?: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PropertyGroupOption"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["PropertyGroupOption"];
+                    };
+                };
+            };
+            /** @description Updated */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    getPropertyGroup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["PropertyGroup"];
+                    };
+                };
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    deletePropertyGroup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    updatePropertyGroup: {
+        parameters: {
+            query?: {
+                /** @description Return the written entity instead of 204. */
+                _response?: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PropertyGroup"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["PropertyGroup"];
+                    };
+                };
+            };
+            /** @description Updated */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
     listSalesChannel: {
         parameters: {
             query?: {
@@ -5702,6 +6295,80 @@ export interface operations {
             };
         };
     };
+    searchPropertyGroup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Criteria"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        aggregations?: Record<string, never>;
+                        data?: components["schemas"]["PropertyGroup"][];
+                        total?: number;
+                    };
+                };
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    searchPropertyGroupOption: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Criteria"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        aggregations?: Record<string, never>;
+                        data?: components["schemas"]["PropertyGroupOption"][];
+                        total?: number;
+                    };
+                };
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
     searchSalesChannel: {
         parameters: {
             query?: never;
@@ -5724,6 +6391,43 @@ export interface operations {
                     "application/json": {
                         aggregations?: Record<string, never>;
                         data?: components["schemas"]["SalesChannel"][];
+                        total?: number;
+                    };
+                };
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    searchSeoUrl: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Criteria"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        aggregations?: Record<string, never>;
+                        data?: components["schemas"]["SeoUrl"][];
                         total?: number;
                     };
                 };
@@ -5841,6 +6545,197 @@ export interface operations {
             };
             /** @description Error */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    listSeoUrl: {
+        parameters: {
+            query?: {
+                limit?: number;
+                page?: number;
+                term?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        aggregations?: Record<string, never>;
+                        data?: components["schemas"]["SeoUrl"][];
+                        total?: number;
+                    };
+                };
+            };
+        };
+    };
+    createSeoUrl: {
+        parameters: {
+            query?: {
+                /** @description Return the written entity instead of 204. */
+                _response?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SeoUrl"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["SeoUrl"];
+                    };
+                };
+            };
+            /** @description Created */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    getSeoUrl: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["SeoUrl"];
+                    };
+                };
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    deleteSeoUrl: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+        };
+    };
+    updateSeoUrl: {
+        parameters: {
+            query?: {
+                /** @description Return the written entity instead of 204. */
+                _response?: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SeoUrl"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data?: components["schemas"]["SeoUrl"];
+                    };
+                };
+            };
+            /** @description Updated */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Errors"];
+                };
+            };
+            /** @description Error */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

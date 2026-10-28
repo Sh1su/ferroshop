@@ -11,6 +11,7 @@ mod guard;
 mod listing;
 mod order;
 mod pricing;
+mod properties;
 
 use axum::Router;
 use axum::middleware;
@@ -36,6 +37,7 @@ pub fn router(state: StoreState) -> Router {
         .route("/context", get(context::show).patch(context::update))
         .route("/product", post(catalog::products).get(catalog::products))
         .route("/product/{id}", post(catalog::product).get(catalog::product))
+        .route("/product/{id}/find-variant", post(properties::find_variant))
         .route("/product-listing/{category_id}", post(listing::category_listing).get(listing::category_listing))
         .route("/search", post(listing::search_listing).get(listing::search_listing))
         .route("/search-suggest", post(listing::suggest).get(listing::suggest))

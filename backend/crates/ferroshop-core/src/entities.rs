@@ -155,6 +155,8 @@ entity! {
         many_to_one("cover", "product_media", "coverId"),
         one_to_many("media", "product_media", "productId"),
         one_to_many("seoUrls", "seo_url", "foreignKey"),
+        many_to_many("properties", "property_group_option", "product_property", "product_id", "option_id"),
+        many_to_many("options", "property_group_option", "product_option", "product_id", "option_id"),
     }
 }
 
@@ -420,6 +422,38 @@ entity! {
 }
 
 entity! {
+    pub static PROPERTY_GROUP = "property_group" in "property_group" translations "property_group_translation" {
+        id("id"),
+        string("displayType", "display_type"),
+        string("sortingType", "sorting_type"),
+        int("position", "position"),
+        bool("filterable", "filterable"),
+        bool("visibleOnProductDetailPage", "visible_on_product_detail_page"),
+        string("name", "name") [TRANSLATED | REQUIRED | SEARCHABLE],
+        text("description", "description") [TRANSLATED],
+        datetime("createdAt", "created_at") [READ_ONLY],
+        datetime("updatedAt", "updated_at") [READ_ONLY],
+        one_to_many("options", "property_group_option", "groupId"),
+    }
+}
+
+entity! {
+    pub static PROPERTY_GROUP_OPTION = "property_group_option" in "property_group_option"
+        translations "property_group_option_translation" {
+        id("id"),
+        fk("groupId", "group_id", "property_group") [REQUIRED],
+        int("position", "position"),
+        string("colorHexCode", "color_hex_code"),
+        fk("mediaId", "media_id", "media"),
+        string("name", "name") [TRANSLATED | REQUIRED | SEARCHABLE],
+        datetime("createdAt", "created_at") [READ_ONLY],
+        datetime("updatedAt", "updated_at") [READ_ONLY],
+        many_to_one("group", "property_group", "groupId"),
+        many_to_one("media", "media", "mediaId"),
+    }
+}
+
+entity! {
     pub static SEO_URL = "seo_url" in "seo_url" {
         id("id"),
         fk("salesChannelId", "sales_channel_id", "sales_channel") [REQUIRED],
@@ -462,6 +496,8 @@ pub static ALL: &[&EntityDefinition] = &[
     &MEDIA,
     &PRODUCT_MEDIA,
     &SEO_URL,
+    &PROPERTY_GROUP,
+    &PROPERTY_GROUP_OPTION,
 ];
 
 /// Looks an entity up by its snake_case or kebab-case name.

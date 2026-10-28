@@ -28,7 +28,8 @@ An open-source e-commerce backend written in Rust, modelled on the
 | Store-API: cart (line items, purchase rules, closeout stock, shipping costs, tax totals) | ✅ |
 | Store-API: registration (incl. guests), login, profile, password, e-mail, addresses, checkout, order history | ✅ |
 | SEO URLs: generated per sales channel and language, kept on rename, `/store-api/seo-url`, `sw-include-seo-urls` | ✅ |
-| Store-API: properties & variant configurator, CMS pages, password recovery, mails; Shopware Frontends end-to-end | next |
+| Properties & variants: property groups/options, variant generator, configurator, find-variant, property filters | ✅ |
+| Store-API: CMS pages, password recovery, mails; Shopware Frontends end-to-end | next |
 
 ## Quick start
 
@@ -110,6 +111,14 @@ The context token is the session: registration, login and logout always answer w
 `sw-context-token`, a password change ends the customer's other sessions. Placing an order
 recalculates the cart first and refuses if anything changed; stock is booked in the same
 transaction, so closeout products cannot be oversold.
+
+Variants are defined by property options (`product.options`), descriptive properties live in
+`product.properties`. `POST /api/_action/product/{id}/generate-variants` with `{"options": [...]}`
+creates one variant per combination (one option per property group) and skips existing ones.
+Product pages answer with Shopware's `configurator` (options flagged `combinable`) and
+`sortedProperties`; `/store-api/product/{id}/find-variant` maps chosen options to a variant, and
+listings take `properties=<id>|<id>` (OR within a group, AND across groups) with a
+`properties` aggregation of all filterable groups.
 
 SEO URLs follow Shopware's default templates (`Shoes/Sneakers/` for categories below the sales
 channel's navigation root, `Boot/SW-10001` for products) and are updated after every Admin-API

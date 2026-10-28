@@ -1,4 +1,4 @@
-//! Non-CRUD endpoints: media upload/delivery and order state transitions.
+//! Non-CRUD endpoints: media upload/delivery, order state transitions and variant generation.
 
 use axum::Json;
 use axum::body::{Body, Bytes};
@@ -7,7 +7,7 @@ use axum::http::{HeaderMap, StatusCode, header};
 use axum::response::{IntoResponse, Response};
 use ferroshop_core::acl::{Action, Permissions};
 use ferroshop_core::order_state::{self, Machine};
-use ferroshop_core::{id, media};
+use ferroshop_core::{id, media, seo, variants};
 use serde::Deserialize;
 use serde_json::{Value, json};
 use sqlx::Row;
@@ -108,4 +108,37 @@ pub async fn order_transition(
     let order_id = parse_order_id(&order_id)?;
     order_state::transition(&state.db, order_id, machine, &transition, &ctx).await?;
     Ok(Json(json!({ "data": order_states(&state, order_id).await? })))
+}
+
+#[derive(Debug, Deserialize)]
+pub struct GenerateVariants {
+    options: Vec<String>,
+}
+
+/// `POST /api/_action/product/{id}/generate-variants` with `{"options": [optionId, …]}`:
+/// creates the missing variants for every combination (one option per property group).
+pub async fn generate_variants(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Extension(perms): Extension<Permissions>,
+    Path(product_id): Path<String>,
+    headers: HeaderMap,
+    body: Bytes,
+) -> Result<Json<Value>, ApiError> {
+    let body: GenerateVariants =
+        serde_json::from_slice(&body).map_err(|e| ApiError::BadRequest(format!("invalid request body: {e}")))?;
+    require(&perms, "product", Action::Create)?;
+    require(&perms, "property_group_option", Action::Read)?;
+    let ctx = context(&headers, &principal)?;
+    let parent = id::parse(&product_id)
+        .ok_or_else(|| ferroshop_core::Error::NotFound { entity: "product".into(), id: product_id.clone() })?;
+    let mut options = Vec::with_capacity(body.options.len());
+    for raw in &body.options {
+        options.push(id::parse(raw).ok_or_else(|| ApiError::BadRequest(format!("invalid option id `{raw}`")))?);
+    }
+    let created = variants::generate(&state.db, parent, &options, &ctx).await?;
+    if let Err(err) = seo::update(&state.db, seo::Scope::Products(created.clone())).await {
+        tracing::warn!(error = %err, "updating SEO URLs failed");
+    }
+    Ok(Json(json!({ "data": created.into_iter().map(id::format).collect::<Vec<_>>() })))
 }

@@ -139,6 +139,19 @@ fn allowed_quantity(product: &Value, requested: u32, errors: &mut BTreeMap<Strin
     Some(quantity)
 }
 
+/// `[{group, option}]` naming a variant, e.g. `Colour: Red`, ordered like the groups.
+fn variant_options(product: &Value) -> Value {
+    let mut options: Vec<&Value> = product["options"].as_array().map(|o| o.iter().collect()).unwrap_or_default();
+    options
+        .sort_by_key(|o| (o["group"]["position"].as_i64().unwrap_or(0), o["group"]["translated"]["name"].to_string()));
+    Value::Array(
+        options
+            .into_iter()
+            .map(|o| json!({ "group": o["group"]["translated"]["name"], "option": o["translated"]["name"] }))
+            .collect(),
+    )
+}
+
 fn line_item(item: &StoredItem, product: &Value, price: &CalculatedPrice) -> Value {
     let price_json = price.to_json();
     json!({
@@ -181,7 +194,7 @@ fn line_item(item: &StoredItem, product: &Value, price: &CalculatedPrice) -> Val
             "isCloseout": product["isCloseout"],
             "shippingFree": product["shippingFree"],
             "stock": product["stock"],
-            "options": [],
+            "options": variant_options(product),
         },
         "quantityInformation": {
             "minPurchase": int(product, "minPurchase").unwrap_or(1).max(1),
@@ -211,6 +224,7 @@ pub async fn calculate(
     } else {
         let mut criteria = Criteria::with_ids(product_ids);
         criteria.associations.insert("cover.media".into(), Criteria::default());
+        criteria.associations.insert("options.group".into(), Criteria::default());
         let found = catalog::search(state, sc, "product", criteria, guard::MAX_LIMIT).await?.data;
         found.into_iter().map(|p| (p["id"].as_str().unwrap_or_default().to_string(), p)).collect()
     };

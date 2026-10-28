@@ -768,3 +768,146 @@ async fn seo_urls_are_generated_kept_and_resolved(db: Db) {
     let foreign = store.with(Method::POST, "/store-api/seo-url", &de, criteria).await;
     assert_eq!(foreign.body["total"], 0);
 }
+
+async fn find_variant(store: &Store, product: &str, a: &str, b: &str) -> Option<String> {
+    let found = store.post(&format!("/store-api/product/{product}/find-variant"), json!({ "options": [a, b] })).await;
+    found.body["foundCombination"]["variantId"].as_str().map(str::to_string)
+}
+
+/// Creates a property group with options; returns the option ids by name.
+async fn property_group(
+    db: &Db,
+    name: &str,
+    extra: Value,
+    options: &[&str],
+) -> std::collections::HashMap<String, String> {
+    let mut payload = json!({
+        "name": name,
+        "options": options.iter().enumerate().map(|(i, o)| json!({ "name": o, "position": i })).collect::<Vec<_>>(),
+    });
+    payload.as_object_mut().unwrap().extend(extra.as_object().unwrap().clone());
+    let group = create(db, "property_group", payload).await;
+    let rows: Vec<(uuid::Uuid, String)> = sqlx::query_as(
+        "SELECT o.id, t.name FROM property_group_option o JOIN property_group_option_translation t \
+         ON t.property_group_option_id = o.id WHERE o.group_id = $1",
+    )
+    .bind(id::parse(&group).unwrap())
+    .fetch_all(db)
+    .await
+    .unwrap();
+    rows.into_iter().map(|(option, name)| (name, id::format(option))).collect()
+}
+
+#[sqlx::test(migrator = "ferroshop_core::MIGRATOR")]
+async fn properties_configurator_and_filters(db: Db) {
+    let store = Store::new(db.clone());
+    let ctx = Context::default();
+    let catalog = catalog(&db).await;
+    let colour = property_group(&db, "Colour", json!({ "displayType": "color" }), &["Red", "Blue"]).await;
+    let size = property_group(&db, "Size", json!({ "sortingType": "position" }), &["S", "M"]).await;
+    let material = property_group(&db, "Material", json!({}), &["Cotton", "Wool"]).await;
+    let care = property_group(
+        &db,
+        "Care",
+        json!({ "filterable": false, "visibleOnProductDetailPage": false }),
+        &["Hand wash"],
+    )
+    .await;
+
+    let tax = id::format(defaults::TAX_STANDARD);
+    let shirt = create(
+        &db,
+        "product",
+        json!({ "productNumber": "T-1", "name": "Shirt", "stock": 0, "taxId": tax, "price": price(20.0), "active": true,
+                "categories": [{ "id": catalog.shoes }],
+                "properties": [{ "id": material["Cotton"] }, { "id": care["Hand wash"] }] }),
+    )
+    .await;
+    let scarf = create(
+        &db,
+        "product",
+        json!({ "productNumber": "W-1", "name": "Scarf", "stock": 5, "taxId": tax, "price": price(15.0), "active": true,
+                "categories": [{ "id": catalog.shoes }], "properties": [{ "id": material["Wool"] }] }),
+    )
+    .await;
+    let options: Vec<uuid::Uuid> =
+        [&colour["Red"], &colour["Blue"], &size["S"], &size["M"]].iter().map(|o| id::parse(o).unwrap()).collect();
+    let shirt_id = id::parse(&shirt).unwrap();
+    let created = ferroshop_core::variants::generate(&db, shirt_id, &options, &ctx).await.unwrap();
+    assert_eq!(created.len(), 4);
+    assert!(ferroshop_core::variants::generate(&db, shirt_id, &options, &ctx).await.unwrap().is_empty(), "idempotent");
+    assert!(ferroshop_core::variants::generate(&db, created[0], &options, &ctx).await.is_err(), "not on variants");
+    let blue_m = find_variant(&store, &shirt, &colour["Blue"], &size["M"]).await.unwrap();
+    write::delete(&db, "product", &[blue_m], &ctx).await.unwrap();
+    sqlx::query("UPDATE product SET stock = 5 WHERE parent_id = $1").bind(shirt_id).execute(&db).await.unwrap();
+
+    // Configurator: groups with options; Blue/S cannot switch to M.
+    let blue_s = find_variant(&store, &shirt, &colour["Blue"], &size["S"]).await.unwrap();
+    let detail = store.post(&format!("/store-api/product/{blue_s}"), json!({})).await;
+    assert_eq!(detail.status, StatusCode::OK, "{}", detail.body);
+    let groups = detail.body["configurator"].as_array().unwrap();
+    let names: Vec<&str> = groups.iter().map(|g| g["translated"]["name"].as_str().unwrap()).collect();
+    assert_eq!(names, ["Colour", "Size"]);
+    let sizes = &groups[1]["options"];
+    assert_eq!((sizes[0]["translated"]["name"].as_str(), sizes[0]["combinable"].as_bool()), (Some("S"), Some(true)));
+    assert_eq!((sizes[1]["translated"]["name"].as_str(), sizes[1]["combinable"].as_bool()), (Some("M"), Some(false)));
+    assert!(groups[0]["options"].as_array().unwrap().iter().all(|o| o["combinable"] == true));
+    // Properties are inherited from the main product; hidden groups are left out.
+    let properties = &detail.body["product"]["sortedProperties"];
+    assert_eq!(properties.as_array().unwrap().len(), 1);
+    assert_eq!(properties[0]["options"][0]["translated"]["name"], "Cotton");
+    assert_eq!(detail.body["product"]["options"].as_array().unwrap().len(), 2);
+    let plain = store.post(&format!("/store-api/product/{scarf}"), json!({})).await;
+    assert_eq!(plain.body["configurator"], json!([]));
+
+    // Finding variants: exact, or keeping the switched group's option.
+    let missing = store
+        .post(&format!("/store-api/product/{shirt}/find-variant"), json!({ "options": [colour["Blue"], size["M"]] }))
+        .await;
+    assert_eq!(missing.body["errors"][0]["code"], "CONTENT__PRODUCT_VARIANT_NOT_FOUND");
+    let switched =
+        |group_option: &str| json!({ "options": [colour["Blue"], size["M"]], "switchedGroup": group_option });
+    let size_group: String =
+        sqlx::query_scalar::<_, uuid::Uuid>("SELECT group_id FROM property_group_option WHERE id = $1")
+            .bind(id::parse(&size["M"]).unwrap())
+            .fetch_one(&db)
+            .await
+            .map(id::format)
+            .unwrap();
+    let red_m = find_variant(&store, &shirt, &colour["Red"], &size["M"]).await.unwrap();
+    let found = store.post(&format!("/store-api/product/{blue_s}/find-variant"), switched(&size_group)).await;
+    assert_eq!(found.body["foundCombination"]["variantId"], red_m);
+
+    // Listing: property filters (OR within a group, AND across groups) and the aggregation.
+    let uri = format!("/store-api/product-listing/{}", catalog.shoes);
+    let listing = store.post(&uri, json!({})).await;
+    let aggregation = &listing.body["aggregations"]["properties"];
+    let names: Vec<&str> =
+        aggregation["entities"].as_array().unwrap().iter().map(|g| g["translated"]["name"].as_str().unwrap()).collect();
+    assert_eq!(names, ["Colour", "Material", "Size"], "only filterable groups");
+    let filtered = |properties: String| {
+        let uri = uri.clone();
+        let store = &store;
+        async move { ids(&store.post(&uri, json!({ "properties": properties })).await.body["elements"]) }
+    };
+    assert_eq!(filtered(material["Wool"].clone()).await, vec![scarf.clone()]);
+    assert_eq!(filtered(colour["Red"].clone()).await, vec![shirt.clone()]);
+    assert!(filtered(format!("{}|{}", colour["Red"], material["Wool"])).await.is_empty());
+    assert_eq!(
+        filtered(format!("{}|{}", material["Cotton"], material["Wool"])).await,
+        vec![scarf.clone(), shirt.clone()]
+    );
+    let still = store.post(&uri, json!({ "properties": material["Wool"] })).await;
+    assert_eq!(still.body["aggregations"]["properties"]["entities"].as_array().unwrap().len(), 3);
+
+    // The cart names the variant by its options.
+    let cart = store
+        .post("/store-api/checkout/cart/line-item", json!({ "items": [{ "type": "product", "referencedId": red_m }] }))
+        .await;
+    assert_eq!(
+        cart.body["lineItems"][0]["payload"]["options"],
+        json!([
+            { "group": "Colour", "option": "Red" }, { "group": "Size", "option": "M" },
+        ])
+    );
+}
