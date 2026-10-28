@@ -306,12 +306,20 @@ pub async fn currencies(
     Ok(Json(Value::Array(search(&state, &sc, "currency", criteria, DEFAULT_LIMIT).await?.data)))
 }
 
+/// `/store-api/language`. Shopware keeps the locale in an association (`translationCode`), which
+/// storefronts use to match languages to URL prefixes; ferroshop stores it on the language.
 pub async fn languages(
     State(state): State<StoreState>,
     Extension(sc): Extension<SalesChannelContext>,
     body: Bytes,
 ) -> Result<Json<Value>, ApiError> {
-    search_route(&state, &sc, "language", &body).await
+    let Json(mut result) = search_route(&state, &sc, "language", &body).await?;
+    for language in result["elements"].as_array_mut().into_iter().flatten() {
+        if let Some(code) = language.get("localeCode").cloned() {
+            language["translationCode"] = json!({ "code": code, "apiAlias": "locale" });
+        }
+    }
+    Ok(Json(result))
 }
 
 pub async fn countries(
@@ -345,4 +353,133 @@ pub async fn shipping_methods(
     body: Bytes,
 ) -> Result<Json<Value>, ApiError> {
     search_route(&state, &sc, "shipping_method", &body).await
+}
+
+/// `/store-api/salutation`, ordered by position.
+pub async fn salutations(
+    State(state): State<StoreState>,
+    Extension(sc): Extension<SalesChannelContext>,
+    body: Bytes,
+) -> Result<Json<Value>, ApiError> {
+    let mut criteria = guard::criteria(&body)?;
+    if criteria.sort.is_empty() {
+        criteria.sort = serde_json::from_value(json!([{ "field": "position" }])).expect("static sort");
+    }
+    let page = criteria.page;
+    let limit = criteria.limit.unwrap_or(DEFAULT_LIMIT).clamp(1, guard::MAX_LIMIT);
+    let result = search(&state, &sc, "salutation", criteria, DEFAULT_LIMIT).await?;
+    Ok(Json(search_result("salutation", page, limit, result)))
+}
+
+#[derive(Debug, Default, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
+struct BreadcrumbQuery {
+    #[serde(rename = "type")]
+    kind: Option<String>,
+    referrer_category_id: Option<String>,
+}
+
+/// The category a product page's breadcrumb follows: the referrer if the product is in it,
+/// otherwise its first category inside the sales channel's navigation (variants use their
+/// parent's categories).
+async fn product_category(
+    state: &StoreState,
+    sc: &SalesChannelContext,
+    product: Uuid,
+    referrer: Option<Uuid>,
+) -> Result<Option<Uuid>, ApiError> {
+    let mut criteria = Criteria::with_ids(vec![id::format(product)]);
+    criteria.limit = Some(1);
+    let found = search(state, sc, "product", criteria, 1)
+        .await?
+        .data
+        .pop()
+        .ok_or_else(|| not_found("product", &id::format(product)))?;
+    let parent = found["parentId"].as_str().and_then(id::parse);
+    let candidates: Vec<Uuid> = sqlx::query_scalar(
+        "SELECT pc.category_id FROM product_category pc JOIN category c ON c.id = pc.category_id \
+         WHERE pc.product_id = (CASE WHEN EXISTS (SELECT 1 FROM product_category WHERE product_id = $1) THEN $1 ELSE $2 END) \
+         ORDER BY c.position, c.id",
+    )
+    .bind(product)
+    .bind(parent)
+    .fetch_all(&state.db)
+    .await?;
+    if let Some(referrer) = referrer.filter(|r| candidates.contains(r)) {
+        return Ok(Some(referrer));
+    }
+    let Some(root) = sc.navigation_category_id.map(id::format) else { return Ok(None) };
+    for candidate in candidates {
+        if ancestors(state, candidate).await?.contains(&root) {
+            return Ok(Some(candidate));
+        }
+    }
+    Ok(None)
+}
+
+/// `GET /store-api/breadcrumb/{id}?type=category|product&referrerCategoryId=…`: the path from
+/// below the navigation root down to the category, with SEO paths.
+pub async fn breadcrumb(
+    State(state): State<StoreState>,
+    Extension(sc): Extension<SalesChannelContext>,
+    Path(raw_id): Path<String>,
+    RawQuery(query): RawQuery,
+) -> Result<Json<Value>, ApiError> {
+    let params: BreadcrumbQuery = serde_urlencoded::from_str(query.as_deref().unwrap_or_default())
+        .map_err(|e| ApiError::BadRequest(format!("invalid query string: {e}")))?;
+    let target = id::parse(&raw_id).ok_or_else(|| not_found("category", &raw_id))?;
+    let category = match params.kind.as_deref() {
+        Some("product") => {
+            let referrer = params.referrer_category_id.as_deref().and_then(id::parse);
+            product_category(&state, &sc, target, referrer).await?
+        }
+        _ => Some(target),
+    };
+    let (Some(category), Some(root)) = (category, sc.navigation_category_id) else { return Ok(Json(json!([]))) };
+    let root = id::format(root);
+    let path = ancestors(&state, category).await?;
+    let Some(end) = path.iter().position(|p| *p == root) else { return Ok(Json(json!([]))) };
+    let mut chain: Vec<String> = path[..end].to_vec();
+    chain.reverse();
+    if chain.is_empty() {
+        return Ok(Json(json!([])));
+    }
+
+    let mut criteria = Criteria::with_ids(chain.clone());
+    criteria.associations.insert("seoUrls".into(), Criteria::default());
+    let found = search(&state, &sc, "category", criteria, guard::MAX_LIMIT).await?.data;
+    let crumbs: Vec<Value> = chain
+        .iter()
+        .filter_map(|id| found.iter().find(|c| c["id"] == id.as_str()))
+        .map(|c| {
+            let path = c["seoUrls"][0]["seoPathInfo"]
+                .as_str()
+                .map(str::to_string)
+                .unwrap_or_else(|| format!("navigation/{}", c["id"].as_str().unwrap_or_default()));
+            json!({
+                "name": c["translated"]["name"],
+                "categoryId": c["id"],
+                "type": c["type"],
+                "translated": c["translated"],
+                "path": path,
+                "seoUrls": c["seoUrls"],
+                "apiAlias": "breadcrumb",
+            })
+        })
+        .collect();
+    Ok(Json(Value::Array(crumbs)))
+}
+
+/// `/store-api/product/{id}/cross-selling`: ferroshop has no cross-selling yet, so every
+/// product answers with an empty list (Shopware's answer for products without cross-sellings).
+pub async fn cross_selling(Path(_product_id): Path<String>) -> Json<Value> {
+    Json(json!([]))
+}
+
+/// `/store-api/product/{id}/reviews`: reviews are not implemented yet; always an empty result.
+pub async fn reviews(Path(_product_id): Path<String>) -> Json<Value> {
+    Json(json!({
+        "entity": "product_review", "total": 0, "aggregations": {}, "page": 1, "limit": 10, "elements": [],
+        "apiAlias": "dal_entity_search_result",
+    }))
 }

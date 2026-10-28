@@ -265,6 +265,7 @@ entity! {
         fk("defaultPaymentMethodId", "default_payment_method_id", "payment_method"),
         fk("defaultBillingAddressId", "default_billing_address_id", "customer_address"),
         fk("defaultShippingAddressId", "default_shipping_address_id", "customer_address"),
+        fk("salutationId", "salutation_id", "salutation"),
         string("title", "title"),
         string("firstName", "first_name") [REQUIRED | SEARCHABLE],
         string("lastName", "last_name") [REQUIRED | SEARCHABLE],
@@ -284,6 +285,7 @@ entity! {
         many_to_one("defaultPaymentMethod", "payment_method", "defaultPaymentMethodId"),
         many_to_one("defaultBillingAddress", "customer_address", "defaultBillingAddressId"),
         many_to_one("defaultShippingAddress", "customer_address", "defaultShippingAddressId"),
+        many_to_one("salutation", "salutation", "salutationId"),
         one_to_many("addresses", "customer_address", "customerId"),
         one_to_many("orders", "order", "customerId"),
     }
@@ -294,6 +296,7 @@ entity! {
         id("id"),
         fk("customerId", "customer_id", "customer") [REQUIRED],
         fk("countryId", "country_id", "country") [REQUIRED],
+        fk("salutationId", "salutation_id", "salutation"),
         string("firstName", "first_name") [REQUIRED | SEARCHABLE],
         string("lastName", "last_name") [REQUIRED | SEARCHABLE],
         string("company", "company"),
@@ -306,6 +309,7 @@ entity! {
         datetime("updatedAt", "updated_at") [READ_ONLY],
         many_to_one("customer", "customer", "customerId"),
         many_to_one("country", "country", "countryId"),
+        many_to_one("salutation", "salutation", "salutationId"),
     }
 }
 
@@ -357,6 +361,7 @@ entity! {
         id("id"),
         fk("orderId", "order_id", "order") [REQUIRED],
         fk("countryId", "country_id", "country") [REQUIRED],
+        fk("salutationId", "salutation_id", "salutation"),
         string("firstName", "first_name") [REQUIRED],
         string("lastName", "last_name") [REQUIRED],
         string("company", "company"),
@@ -367,6 +372,7 @@ entity! {
         datetime("createdAt", "created_at") [READ_ONLY],
         datetime("updatedAt", "updated_at") [READ_ONLY],
         many_to_one("country", "country", "countryId"),
+        many_to_one("salutation", "salutation", "salutationId"),
     }
 }
 
@@ -524,6 +530,18 @@ entity! {
 }
 
 entity! {
+    pub static SALUTATION = "salutation" in "salutation" translations "salutation_translation" {
+        id("id"),
+        string("salutationKey", "salutation_key") [REQUIRED],
+        int("position", "position"),
+        string("displayName", "display_name") [TRANSLATED | REQUIRED | SEARCHABLE],
+        string("letterName", "letter_name") [TRANSLATED],
+        datetime("createdAt", "created_at") [READ_ONLY],
+        datetime("updatedAt", "updated_at") [READ_ONLY],
+    }
+}
+
+entity! {
     pub static SEO_URL = "seo_url" in "seo_url" {
         id("id"),
         fk("salesChannelId", "sales_channel_id", "sales_channel") [REQUIRED],
@@ -572,6 +590,7 @@ pub static ALL: &[&EntityDefinition] = &[
     &CMS_SECTION,
     &CMS_BLOCK,
     &CMS_SLOT,
+    &SALUTATION,
 ];
 
 /// Looks an entity up by its snake_case or kebab-case name.

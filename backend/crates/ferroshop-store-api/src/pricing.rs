@@ -1,4 +1,5 @@
-//! Adds Shopware's calculated prices to every product in a Store-API response.
+//! Adds what storefronts read from every product in a Store-API response: Shopware's calculated
+//! prices and the availability fields (`available`, `availableStock`).
 
 use std::collections::HashMap;
 
@@ -56,6 +57,13 @@ fn apply(value: &mut Value, rates: &HashMap<String, Decimal>, sc: &SalesChannelC
             let rate = map.get("taxId").and_then(Value::as_str).and_then(|t| rates.get(t)).copied().unwrap_or_default();
             let calculated =
                 map.get("price").and_then(|p| price::calculate(p, rate, 1, &sc.price)).unwrap_or(Value::Null);
+            // Stock is booked when an order is placed, so all of it is available. Closeout
+            // products can only be bought while the minimum purchase is in stock.
+            let stock = map.get("stock").and_then(Value::as_i64).unwrap_or(0);
+            let min_purchase = map.get("minPurchase").and_then(Value::as_i64).unwrap_or(1).max(1);
+            let closeout = map.get("isCloseout").and_then(Value::as_bool).unwrap_or(false);
+            map.insert("availableStock".into(), Value::from(stock));
+            map.insert("available".into(), Value::Bool(!closeout || stock >= min_purchase));
             map.insert("calculatedPrices".into(), Value::Array(Vec::new()));
             map.insert("calculatedCheapestPrice".into(), calculated.clone());
             map.insert("calculatedPrice".into(), calculated);
@@ -65,8 +73,9 @@ fn apply(value: &mut Value, rates: &HashMap<String, Decimal>, sc: &SalesChannelC
     }
 }
 
-/// Sets `calculatedPrice`, `calculatedPrices` and `calculatedCheapestPrice` on all products,
-/// nested ones included. Must run before `includes` strip `price` and `taxId`.
+/// Sets `calculatedPrice`, `calculatedPrices`, `calculatedCheapestPrice`, `available` and
+/// `availableStock` on all products, nested ones included. Must run before `includes` strip the
+/// fields they are computed from.
 pub async fn enrich(db: &Db, sc: &SalesChannelContext, data: &mut [Value]) -> Result<(), ApiError> {
     let rates = tax_rates(db, data).await?;
     data.iter_mut().for_each(|row| apply(row, &rates, sc));

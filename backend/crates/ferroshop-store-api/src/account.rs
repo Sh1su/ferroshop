@@ -51,6 +51,7 @@ pub(crate) async fn customer_json(db: &Db, sc: &SalesChannelContext, customer_id
         "defaultBillingAddress": { "associations": { "country": {} } },
         "defaultShippingAddress": { "associations": { "country": {} } },
         "group": {},
+        "salutation": {},
     }}))
     .expect("static criteria");
     let mut customer = read::read(db, "customer", &id::format(customer_id), &criteria, &sc.core()).await?;
@@ -138,6 +139,36 @@ async fn email_taken(db: &Db, email: &str, except: Option<Uuid>) -> Result<bool,
     .await?)
 }
 
+fn not_specified() -> Value {
+    json!(id::format(ferroshop_core::defaults::SALUTATION_NOT_SPECIFIED))
+}
+
+/// A valid salutation id, `fallback` when none is given; `null` (with an error) if invalid.
+async fn salutation(
+    db: &Db,
+    raw: Option<&str>,
+    fallback: Value,
+    pointer: &str,
+    errors: &mut Vec<WriteError>,
+) -> Result<Value, ApiError> {
+    let Some(raw) = raw.filter(|r| !r.is_empty()) else { return Ok(fallback) };
+    let exists = match id::parse(raw) {
+        Some(parsed) => sqlx::query_scalar::<_, bool>("SELECT EXISTS (SELECT 1 FROM salutation WHERE id = $1)")
+            .bind(parsed)
+            .fetch_one(db)
+            .await?
+            .then_some(parsed),
+        None => None,
+    };
+    match exists {
+        Some(parsed) => Ok(json!(id::format(parsed))),
+        None => {
+            errors.push(violation(pointer, "VIOLATION::ENTITY_DOES_NOT_EXIST", "unknown salutation"));
+            Ok(Value::Null)
+        }
+    }
+}
+
 /// Address fields a shopper may set; everything else (customer, ids) is decided by the server.
 #[derive(Debug, Default, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
@@ -151,18 +182,25 @@ pub struct AddressInput {
     city: Option<String>,
     country_id: Option<String>,
     phone_number: Option<String>,
+    salutation_id: Option<String>,
 }
 
 impl AddressInput {
-    /// Write payload for the address; names default to the customer's.
+    /// Write payload for the address; names and salutation default to the customer's.
     async fn payload(
         &self,
         db: &Db,
         pointer: &str,
         names: (&str, &str),
+        default_salutation: &Value,
         errors: &mut Vec<WriteError>,
     ) -> Result<Map<String, Value>, ApiError> {
         let mut out = Map::new();
+        let pointer_salutation = format!("{pointer}/salutationId");
+        let salutation =
+            salutation(db, self.salutation_id.as_deref(), default_salutation.clone(), &pointer_salutation, errors)
+                .await?;
+        out.insert("salutationId".into(), salutation);
         let country = self.country_id.as_deref().and_then(id::parse);
         let active: bool = match country {
             Some(country) => {
@@ -215,6 +253,7 @@ impl AddressInput {
 #[derive(Debug, Default, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct Registration {
+    salutation_id: Option<String>,
     title: Option<String>,
     first_name: String,
     last_name: String,
@@ -254,15 +293,21 @@ pub async fn register(
         let detail = format!("password needs at least {} characters", password::MIN_LENGTH);
         errors.push(violation("/password", "VIOLATION::TOO_SHORT_ERROR", &detail));
     }
+    let salutation_id =
+        salutation(db, input.salutation_id.as_deref(), not_specified(), "/salutationId", &mut errors).await?;
     let billing = match &input.billing_address {
-        Some(address) => Some(address.payload(db, "/billingAddress", (first, last), &mut errors).await?),
+        Some(address) => {
+            Some(address.payload(db, "/billingAddress", (first, last), &salutation_id, &mut errors).await?)
+        }
         None => {
             errors.push(violation("/billingAddress", "VIOLATION::IS_BLANK_ERROR", "a billing address is required"));
             None
         }
     };
     let shipping = match &input.shipping_address {
-        Some(address) => Some(address.payload(db, "/shippingAddress", (first, last), &mut errors).await?),
+        Some(address) => {
+            Some(address.payload(db, "/shippingAddress", (first, last), &salutation_id, &mut errors).await?)
+        }
         None => None,
     };
     if !errors.is_empty() {
@@ -289,6 +334,7 @@ pub async fn register(
         "salesChannelId": id::format(sc.sales_channel_id),
         "languageId": id::format(sc.language_id),
         "defaultPaymentMethodId": id::format(sc.payment_method_id),
+        "salutationId": salutation_id,
         "title": input.title,
         "firstName": first,
         "lastName": last,
@@ -384,6 +430,7 @@ fn success() -> Json<Value> {
 #[derive(Debug, Default, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct Profile {
+    salutation_id: Option<String>,
     title: Option<String>,
     first_name: String,
     last_name: String,
@@ -406,11 +453,13 @@ pub async fn change_profile(
             errors.push(violation(&format!("/{key}"), "VIOLATION::IS_BLANK_ERROR", "this value should not be blank"));
         }
     }
+    let salutation_id =
+        salutation(&state.db, input.salutation_id.as_deref(), not_specified(), "/salutationId", &mut errors).await?;
     if !errors.is_empty() {
         return Err(Error::Validation(errors).into());
     }
     let payload = json!({
-        "id": id::format(customer_id), "title": input.title, "firstName": first, "lastName": last,
+        "id": id::format(customer_id), "salutationId": salutation_id, "title": input.title, "firstName": first, "lastName": last,
         "company": input.company, "birthday": input.birthday.filter(|b| !b.is_empty()),
     });
     write::write(&state.db, "customer", &payload, WriteMode::Update, &internal(&sc, customer_id)).await?;
@@ -539,12 +588,14 @@ async fn own_address(state: &StoreState, customer_id: Uuid, raw: &str) -> Result
     if owned { Ok(address) } else { Err(not_found()) }
 }
 
-async fn customer_names(state: &StoreState, customer_id: Uuid) -> Result<(String, String), ApiError> {
-    let row = sqlx::query("SELECT first_name, last_name FROM customer WHERE id = $1")
+/// Name and salutation new addresses start with.
+async fn customer_names(state: &StoreState, customer_id: Uuid) -> Result<(String, String, Value), ApiError> {
+    let row = sqlx::query("SELECT first_name, last_name, salutation_id FROM customer WHERE id = $1")
         .bind(customer_id)
         .fetch_one(&state.db)
         .await?;
-    Ok((row.try_get("first_name")?, row.try_get("last_name")?))
+    let salutation = row.try_get::<Option<Uuid>, _>("salutation_id")?.map(|s| json!(id::format(s)));
+    Ok((row.try_get("first_name")?, row.try_get("last_name")?, salutation.unwrap_or_else(not_specified)))
 }
 
 async fn address_json(state: &StoreState, sc: &SalesChannelContext, address: Uuid) -> Result<Value, ApiError> {
@@ -563,7 +614,7 @@ pub async fn create_address(
     let input: AddressInput = guard::body(&body)?;
     let names = customer_names(&state, customer_id).await?;
     let mut errors = Vec::new();
-    let mut payload = input.payload(&state.db, "", (&names.0, &names.1), &mut errors).await?;
+    let mut payload = input.payload(&state.db, "", (&names.0, &names.1), &names.2, &mut errors).await?;
     if !errors.is_empty() {
         return Err(Error::Validation(errors).into());
     }
@@ -585,7 +636,7 @@ pub async fn update_address(
     let input: AddressInput = guard::body(&body)?;
     let names = customer_names(&state, customer_id).await?;
     let mut errors = Vec::new();
-    let mut payload = input.payload(&state.db, "", (&names.0, &names.1), &mut errors).await?;
+    let mut payload = input.payload(&state.db, "", (&names.0, &names.1), &names.2, &mut errors).await?;
     if !errors.is_empty() {
         return Err(Error::Validation(errors).into());
     }
@@ -654,4 +705,28 @@ pub async fn default_shipping(
     Path(raw): Path<String>,
 ) -> Result<Json<Value>, ApiError> {
     set_default(&state, &sc, &raw, "defaultShippingAddressId").await
+}
+
+/// `POST /store-api/account/change-payment-method/{paymentMethodId}`: the customer's default.
+pub async fn change_payment_method(
+    State(state): State<StoreState>,
+    Extension(sc): Extension<SalesChannelContext>,
+    Path(raw): Path<String>,
+) -> Result<Json<Value>, ApiError> {
+    let customer_id = require_registered(&state, &sc).await?;
+    let method = id::parse(&raw);
+    let active: bool = sqlx::query_scalar("SELECT EXISTS (SELECT 1 FROM payment_method WHERE id = $1 AND active)")
+        .bind(method)
+        .fetch_one(&state.db)
+        .await?;
+    let Some(method) = method.filter(|_| active) else {
+        return Err(ApiError::Code(
+            StatusCode::BAD_REQUEST,
+            "CHECKOUT__UNKNOWN_PAYMENT_METHOD",
+            format!("unknown payment method `{raw}`"),
+        ));
+    };
+    let payload = json!({ "id": id::format(customer_id), "defaultPaymentMethodId": id::format(method) });
+    write::write(&state.db, "customer", &payload, WriteMode::Update, &internal(&sc, customer_id)).await?;
+    Ok(success())
 }

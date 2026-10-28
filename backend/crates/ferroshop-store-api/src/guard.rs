@@ -31,6 +31,7 @@ const PUBLIC: &[&str] = &[
     "cms_section",
     "cms_block",
     "cms_slot",
+    "salutation",
 ];
 
 /// What a logged-in customer may additionally read, always filtered to their own records.

@@ -30,7 +30,8 @@ An open-source e-commerce backend written in Rust, modelled on the
 | SEO URLs: generated per sales channel and language, kept on rename, `/store-api/seo-url`, `sw-include-seo-urls` | ✅ |
 | Properties & variants: property groups/options, variant generator, configurator, find-variant, property filters | ✅ |
 | Shopping experiences: CMS pages, default listing page, `/store-api/cms/{id}`, `cmsPage` on categories | ✅ |
-| Visual layout editor, password recovery, mails; Shopware Frontends end-to-end | next |
+| Frontends routes: breadcrumbs, salutations, handle-payment, order cancel (restocks), payment method change, `available` | ✅ |
+| Visual layout editor, password recovery and mails, wishlist, reviews, cross-selling; Frontends run end-to-end | next |
 
 ## Quick start
 

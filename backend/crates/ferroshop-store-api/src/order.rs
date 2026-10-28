@@ -6,6 +6,7 @@ use axum::extract::{Extension, State};
 use axum::http::StatusCode;
 use ferroshop_admin_api::ApiError;
 use ferroshop_core::criteria::{Filter, Sort};
+use ferroshop_core::order_state::{self, Machine};
 use ferroshop_core::write::{self, WriteMode};
 use ferroshop_core::{Context, Criteria, id, read};
 use serde::Deserialize;
@@ -32,6 +33,7 @@ fn order_address(row: &PgRow, address_id: &str) -> Result<Value, sqlx::Error> {
     Ok(json!({
         "id": address_id,
         "countryId": id::format(row.try_get::<Uuid, _>("country_id")?),
+        "salutationId": row.try_get::<Option<Uuid>, _>("salutation_id")?.map(id::format),
         "firstName": row.try_get::<String, _>("first_name")?,
         "lastName": row.try_get::<String, _>("last_name")?,
         "company": row.try_get::<Option<String>, _>("company")?,
@@ -42,7 +44,7 @@ fn order_address(row: &PgRow, address_id: &str) -> Result<Value, sqlx::Error> {
     }))
 }
 
-const ADDRESS_QUERY: &str = "SELECT country_id, first_name, last_name, company, street, zipcode, city, phone_number \
+const ADDRESS_QUERY: &str = "SELECT country_id, salutation_id, first_name, last_name, company, street, zipcode, city, phone_number \
      FROM customer_address WHERE id = $1 AND customer_id = $2";
 
 fn order_criteria() -> Criteria {
@@ -190,6 +192,8 @@ pub async fn place(
     });
     let ctx = Context { actor_id: Some(customer_id), ..sc.core() };
     let order_id = write::write_in(&mut tx, "order", &order, WriteMode::Create, &ctx).await?;
+    // Cancelling gives the booked stock back (see `order_state`).
+    sqlx::query("UPDATE sales_order SET stock_state = 'booked' WHERE id = $1").bind(order_id).execute(&mut *tx).await?;
     cart::save(&mut tx, &sc, &[]).await?;
     tx.commit().await?;
 
@@ -216,4 +220,57 @@ pub async fn list(
         "paymentChangeable": [],
         "apiAlias": "order_route_response",
     })))
+}
+
+async fn own_order(state: &StoreState, customer_id: Uuid, raw: &str) -> Result<(Uuid, String), ApiError> {
+    let not_found = || ApiError::from(ferroshop_core::Error::NotFound { entity: "order".into(), id: raw.into() });
+    let order = id::parse(raw).ok_or_else(not_found)?;
+    let state_name: Option<String> =
+        sqlx::query_scalar("SELECT state FROM sales_order WHERE id = $1 AND customer_id = $2")
+            .bind(order)
+            .bind(customer_id)
+            .fetch_optional(&state.db)
+            .await?;
+    Ok((order, state_name.ok_or_else(not_found)?))
+}
+
+#[derive(Debug, Default, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
+pub struct OrderReference {
+    order_id: String,
+}
+
+/// `POST /store-api/handle-payment`: all of ferroshop's payment methods are paid outside the
+/// shop (prepayment, invoice, cash on delivery), so there is never a payment provider to
+/// redirect to and the storefront continues to its finish page.
+pub async fn handle_payment(
+    State(state): State<StoreState>,
+    Extension(sc): Extension<SalesChannelContext>,
+    body: Bytes,
+) -> Result<Json<Value>, ApiError> {
+    let customer_id = require_customer(&sc)?;
+    let input: OrderReference = guard::body(&body)?;
+    own_order(&state, customer_id, &input.order_id).await?;
+    Ok(Json(json!({ "redirectUrl": null, "apiAlias": "handle_payment_method_route_response" })))
+}
+
+/// `POST /store-api/order/state/cancel`: customers can cancel orders that are still open;
+/// booked stock is given back.
+pub async fn cancel(
+    State(state): State<StoreState>,
+    Extension(sc): Extension<SalesChannelContext>,
+    body: Bytes,
+) -> Result<Json<Value>, ApiError> {
+    let customer_id = require_customer(&sc)?;
+    let input: OrderReference = guard::body(&body)?;
+    let (order, current) = own_order(&state, customer_id, &input.order_id).await?;
+    if current != "open" {
+        return Err(invalid("CHECKOUT__ORDER_NOT_CANCELLABLE", "only open orders can be cancelled"));
+    }
+    let ctx = Context { actor_id: Some(customer_id), ..sc.core() };
+    let to = order_state::transition(&state.db, order, Machine::Order, "cancel", &ctx).await?;
+    let name = if sc.language_id == ferroshop_core::defaults::LANGUAGE_DE { "Storniert" } else { "Cancelled" };
+    Ok(Json(
+        json!({ "technicalName": to, "name": name, "translated": { "name": name }, "apiAlias": "state_machine_state" }),
+    ))
 }

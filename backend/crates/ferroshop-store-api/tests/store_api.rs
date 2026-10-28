@@ -277,6 +277,14 @@ async fn navigation_tree_follows_depth_and_active_path(db: Db) {
     assert_eq!(category.body["id"], id::format(defaults::ROOT_CATEGORY));
     let currencies = store.post("/store-api/currency", json!({})).await;
     assert_eq!(currencies.body[0]["isoCode"], "EUR");
+    let languages = store.post("/store-api/language", json!({})).await;
+    let codes: Vec<&str> = languages.body["elements"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|l| l["translationCode"]["code"].as_str().unwrap())
+        .collect();
+    assert!(codes.contains(&"de-DE") && codes.contains(&"en-GB"), "{codes:?}");
     let payment = store.post("/store-api/payment-method", json!({})).await;
     assert_eq!(payment.body["total"], 3);
 }
@@ -399,6 +407,11 @@ async fn cart_applies_purchase_rules_and_stock(db: Db) {
         async move { store.send(Method::POST, "/store-api/checkout/cart/line-item", Some(&token), Some(body)).await }
     };
 
+    let product = store.post(&format!("/store-api/product/{closeout}"), json!({})).await;
+    assert_eq!(
+        (product.body["product"]["available"].clone(), product.body["product"]["availableStock"].clone()),
+        (json!(true), json!(2))
+    );
     let limited = add(&closeout, 5).await;
     assert_eq!(limited.body["lineItems"][0]["quantity"], 2);
     assert_eq!(limited.body["errors"][format!("product-stock-reached{closeout}")]["level"], 10);
@@ -413,6 +426,8 @@ async fn cart_applies_purchase_rules_and_stock(db: Db) {
     // Products that sell out or are deactivated leave the cart on the next read.
     sqlx::query("UPDATE product SET stock = 0 WHERE product_number = 'C-1'").execute(&db).await.unwrap();
     sqlx::query("UPDATE product SET active = false WHERE product_number = 'P-1'").execute(&db).await.unwrap();
+    let product = store.post(&format!("/store-api/product/{closeout}"), json!({})).await;
+    assert_eq!(product.body["product"]["available"], false, "sold-out closeout products cannot be bought");
     let cart = store.send(Method::GET, "/store-api/checkout/cart", Some(&token), None).await;
     assert_eq!(cart.body["lineItems"], json!([]));
     assert_eq!(cart.body["errors"][format!("product-out-of-stock{closeout}")]["level"], 20);
@@ -1004,4 +1019,108 @@ async fn cms_pages_resolve_their_slots(db: Db) {
     assert_eq!(ids(&listing["data"]["listing"]["elements"]), vec![catalog.sneaker.clone()]);
     let missing = store.post(&format!("/store-api/cms/{}", "0".repeat(32)), json!({})).await;
     assert_eq!(missing.status, StatusCode::NOT_FOUND);
+}
+
+#[sqlx::test(migrator = "ferroshop_core::MIGRATOR")]
+async fn storefront_routes_for_frontends(db: Db) {
+    use ferroshop_core::order_state::{self, Machine};
+    let store = Store::new(db.clone());
+    let catalog = catalog(&db).await;
+    ferroshop_core::seo::update(&db, ferroshop_core::seo::Scope::All).await.unwrap();
+
+    // Salutations, also used by registration and addresses.
+    let salutations = store.post("/store-api/salutation", json!({})).await;
+    let keys: Vec<&str> =
+        salutations.body["elements"].as_array().unwrap().iter().map(|s| s["salutationKey"].as_str().unwrap()).collect();
+    assert_eq!(keys, ["mr", "mrs", "not_specified"]);
+    let mrs = salutations.body["elements"][1]["id"].as_str().unwrap().to_string();
+    let mut body = registration("ada@example.com");
+    body["salutationId"] = json!(mrs);
+    let registered = store.post("/store-api/account/register", body).await;
+    assert_eq!(registered.body["salutation"]["salutationKey"], "mrs");
+    let token = registered.token.unwrap();
+    let mut invalid = registration("eve@example.com");
+    invalid["salutationId"] = json!("0".repeat(32));
+    let rejected = store.post("/store-api/account/register", invalid).await;
+    assert_eq!(rejected.body["errors"][0]["source"]["pointer"], "/salutationId");
+
+    // Breadcrumbs: below the navigation root, with SEO paths; products follow their category.
+    let crumbs = store.send(Method::GET, &format!("/store-api/breadcrumb/{}", catalog.sneakers), None, None).await;
+    assert_eq!(crumbs.status, StatusCode::OK, "{}", crumbs.body);
+    let names: Vec<&str> = crumbs.body.as_array().unwrap().iter().map(|c| c["name"].as_str().unwrap()).collect();
+    assert_eq!(names, ["Shoes", "Sneakers"]);
+    assert_eq!(crumbs.body[1]["path"], "Shoes/Sneakers/");
+    assert_eq!(crumbs.body[1]["apiAlias"], "breadcrumb");
+    let product = |id: &str, referrer: Option<&str>| {
+        let referrer = referrer.map(|r| format!("&referrerCategoryId={r}")).unwrap_or_default();
+        format!("/store-api/breadcrumb/{id}?type=product{referrer}")
+    };
+    let variant = store.send(Method::GET, &product(&catalog.variant, None), None, None).await;
+    assert_eq!(variant.body.as_array().unwrap().len(), 2, "variants use their parent's category");
+    write::write(
+        &db,
+        "product",
+        &json!({ "id": catalog.boot, "categories": [{ "id": catalog.sneakers }] }),
+        WriteMode::Update,
+        &Context::default(),
+    )
+    .await
+    .unwrap();
+    let referred = store.send(Method::GET, &product(&catalog.boot, Some(&catalog.shoes)), None, None).await;
+    assert_eq!(referred.body.as_array().unwrap().len(), 1, "the referrer category wins");
+    let hidden =
+        store.send(Method::GET, &format!("/store-api/breadcrumb/{}", catalog.hidden_category), None, None).await;
+    assert_eq!(hidden.body, json!([]));
+
+    // Features ferroshop does not have yet answer empty, like Shopware for products without them.
+    assert_eq!(
+        store.post(&format!("/store-api/product/{}/cross-selling", catalog.boot), json!({})).await.body,
+        json!([])
+    );
+    assert_eq!(store.post(&format!("/store-api/product/{}/reviews", catalog.boot), json!({})).await.body["total"], 0);
+
+    // Default payment method, payment handling and cancelling with restocking.
+    let invoice = "0191a6f0f4a07c7e9b1c2d3e4f5a7102";
+    let changed = store
+        .send(Method::POST, &format!("/store-api/account/change-payment-method/{invoice}"), Some(&token), None)
+        .await;
+    assert_eq!(changed.status, StatusCode::OK, "{}", changed.body);
+    let context = store.send(Method::GET, "/store-api/context", Some(&token), None).await;
+    assert_eq!(context.body["paymentMethod"]["technicalName"], "invoice");
+
+    let item = json!({ "items": [{ "type": "product", "referencedId": catalog.boot, "quantity": 3 }] });
+    store.with(Method::POST, "/store-api/checkout/cart/line-item", &token, item).await;
+    let order = store.send(Method::POST, "/store-api/checkout/order", Some(&token), None).await;
+    assert_eq!(order.body["paymentMethodId"], invoice);
+    assert_eq!(order.body["billingAddress"]["salutationId"], mrs);
+    let order_id = order.body["id"].as_str().unwrap().to_string();
+    let stock = || async {
+        sqlx::query_scalar::<_, i32>("SELECT stock FROM product WHERE product_number = 'B-1'")
+            .fetch_one(&db)
+            .await
+            .unwrap()
+    };
+    assert_eq!(stock().await, 7);
+
+    let paid = store.with(Method::POST, "/store-api/handle-payment", &token, json!({ "orderId": order_id })).await;
+    assert_eq!(paid.status, StatusCode::OK, "{}", paid.body);
+    assert_eq!(paid.body["redirectUrl"], Value::Null);
+    let stranger = store.register("mallory@example.com").await;
+    let foreign =
+        store.with(Method::POST, "/store-api/handle-payment", &stranger, json!({ "orderId": order_id })).await;
+    assert_eq!(foreign.status, StatusCode::NOT_FOUND);
+    let foreign =
+        store.with(Method::POST, "/store-api/order/state/cancel", &stranger, json!({ "orderId": order_id })).await;
+    assert_eq!(foreign.status, StatusCode::NOT_FOUND);
+
+    let cancelled =
+        store.with(Method::POST, "/store-api/order/state/cancel", &token, json!({ "orderId": order_id })).await;
+    assert_eq!(cancelled.status, StatusCode::OK, "{}", cancelled.body);
+    assert_eq!(cancelled.body["technicalName"], "cancelled");
+    assert_eq!(stock().await, 10, "cancelling gives the stock back");
+    let again = store.with(Method::POST, "/store-api/order/state/cancel", &token, json!({ "orderId": order_id })).await;
+    assert_eq!(again.body["errors"][0]["code"], "CHECKOUT__ORDER_NOT_CANCELLABLE");
+    let ctx = Context::default();
+    order_state::transition(&db, id::parse(&order_id).unwrap(), Machine::Order, "reopen", &ctx).await.unwrap();
+    assert_eq!(stock().await, 7, "reopening books it again");
 }
