@@ -367,7 +367,7 @@ export const modules: EntityModule[] = [
       { name: 'countryId', label: 'fields.country', type: 'select', entity: 'country', optionLabel: 'translated.name' },
       { name: 'paymentMethodId', label: 'fields.paymentMethod', type: 'select', entity: 'payment_method', optionLabel: 'translated.name' },
       { name: 'shippingMethodId', label: 'fields.shippingMethod', type: 'select', entity: 'shipping_method', optionLabel: 'translated.name' },
-            { name: 'active', label: 'fields.active', type: 'bool', default: false },
+      { name: 'active', label: 'fields.active', type: 'bool', default: false },
     ],
     defaultSort: 'name',
     titleField: 'translated.name',
