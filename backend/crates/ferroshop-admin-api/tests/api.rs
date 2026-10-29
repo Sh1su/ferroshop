@@ -442,3 +442,116 @@ async fn the_default_listing_page_cannot_be_deleted(db: Db) {
     let reply = api.call(Method::DELETE, &format!("/api/cms-page/{own}"), Some(&token), None).await;
     assert_eq!(reply.status, StatusCode::NO_CONTENT);
 }
+
+#[sqlx::test(migrator = "ferroshop_core::MIGRATOR")]
+async fn sales_channel_domains_are_admin_managed_and_searchable(db: Db) {
+    let api = Api::new(db.clone());
+    user(&db, "admin", true).await;
+    let token = api.token("admin").await;
+    let type_id: uuid::Uuid = sqlx::query_scalar("SELECT type_id FROM sales_channel ORDER BY id LIMIT 1")
+        .fetch_one(&db)
+        .await
+        .unwrap();
+    let created_channel = api
+        .call(
+            Method::POST,
+            "/api/sales-channel?_response=true",
+            Some(&token),
+            Some(json!({
+                "typeId": id::format(type_id),
+                "accessKey": "SWSC-DOMAIN-TEST",
+                "name": "Domain test",
+                "languageId": "0191a6f0f4a07c7e9b1c2d3e4f5a6b7c",
+                "currencyId": "b7d2554b0ce847cd82f3ac9bd1c0dfca"
+            })),
+        )
+        .await;
+    assert_eq!(created_channel.status, StatusCode::OK, "{}", String::from_utf8_lossy(&created_channel.body));
+    assert_eq!(created_channel.json()["data"]["active"], false, "API creates new sales channels as drafts");
+    let channel_id = created_channel.json()["data"]["id"].as_str().unwrap();
+
+    let blocked_activation = api
+        .call(
+            Method::PATCH,
+            &format!("/api/sales-channel/{channel_id}"),
+            Some(&token),
+            Some(json!({ "active": true })),
+        )
+        .await;
+    assert_eq!(blocked_activation.status, StatusCode::BAD_REQUEST);
+
+    let created = api
+        .call(
+            Method::POST,
+            "/api/sales-channel-domain?_response=true",
+            Some(&token),
+            Some(json!({
+                "salesChannelId": channel_id,
+                "url": "https://shop.example.test/de",
+                "languageId": "0191a6f0f4a07c7e9b1c2d3e4f5a6b7c",
+                "currencyId": "b7d2554b0ce847cd82f3ac9bd1c0dfca",
+                "browserLanguage": false
+            })),
+        )
+        .await;
+    assert_eq!(created.status, StatusCode::OK, "{}", String::from_utf8_lossy(&created.body));
+    let domain_id = created.json()["data"]["id"].as_str().unwrap();
+    assert_eq!(created.json()["data"]["url"], "https://shop.example.test/de");
+
+    let search = api
+        .call(
+            Method::POST,
+            "/api/search/sales-channel-domain",
+            Some(&token),
+            Some(json!({
+                "filter": [{ "type": "equals", "field": "salesChannelId", "value": channel_id }],
+                "associations": { "language": {}, "currency": {} }
+            })),
+        )
+        .await;
+    assert_eq!(search.status, StatusCode::OK);
+    assert_eq!(search.json()["data"][0]["id"], domain_id);
+    assert_eq!(search.json()["data"][0]["language"]["localeCode"], "de-DE");
+    assert_eq!(search.json()["data"][0]["currency"]["isoCode"], "EUR");
+
+    let activated = api
+        .call(
+            Method::PATCH,
+            &format!("/api/sales-channel/{channel_id}"),
+            Some(&token),
+            Some(json!({ "active": true })),
+        )
+        .await;
+    assert_eq!(activated.status, StatusCode::NO_CONTENT);
+
+    let duplicate = api
+        .call(
+            Method::POST,
+            "/api/sales-channel-domain",
+            Some(&token),
+            Some(json!({
+                "salesChannelId": channel_id,
+                "url": "https://shop.example.test/de",
+                "languageId": "0191a6f0f4a07c7e9b1c2d3e4f5a6b7c",
+                "currencyId": "b7d2554b0ce847cd82f3ac9bd1c0dfca"
+            })),
+        )
+        .await;
+    assert_eq!(duplicate.status, StatusCode::BAD_REQUEST);
+    assert_eq!(duplicate.json()["errors"][0]["code"], "FRAMEWORK__DUPLICATE_ENTRY");
+
+    let invalid_url = api
+        .call(
+            Method::POST,
+            "/api/sales-channel-domain",
+            Some(&token),
+            Some(json!({
+                "salesChannelId": channel_id,
+                "url": "shop.example.test/de",
+                "languageId": "0191a6f0f4a07c7e9b1c2d3e4f5a6b7c",
+                "currencyId": "b7d2554b0ce847cd82f3ac9bd1c0dfca"
+            })),
+        )
+        .await;
+    assert_eq!(invalid_url.status, StatusCode::BAD_REQUEST);
+}
