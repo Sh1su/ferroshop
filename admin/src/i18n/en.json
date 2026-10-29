@@ -72,7 +72,9 @@
     "activationIncomplete": "Complete the sales channel defaults before activating it.",
     "activationRequired": "Choose this default before activating the sales channel.",
     "referenceInactive": "Choose an active item before activating the sales channel.",
-    "referenceUnavailable": "This item is no longer available. Choose another one."
+    "referenceUnavailable": "This item is no longer available. Choose another one.",
+    "activationRequiresDomain": "Save the sales channel as a draft first, then add at least one domain with a URL, language, and currency.",
+    "domainCheckFailed": "Domains could not be checked. The sales channel remains a draft."
   },
   "errors": {
     "FRAMEWORK__WRITE_CONSTRAINT_VIOLATION": "This field is required.",
@@ -102,6 +104,7 @@
     "shippingMethods": "Shipping methods",
     "customerGroups": "Customer groups",
     "salesChannels": "Sales channels",
+    "salesChannelDomains": "Sales channel domains",
     "users": "Users",
     "roles": "Roles",
     "properties": "Properties",
@@ -145,6 +148,8 @@
     "price": "Price",
     "displayGross": "Show gross prices",
     "accessKey": "API access key",
+    "domainUrl": "Domain URL",
+    "browserLanguage": "Prefer browser language",
     "language": "Language",
     "currency": "Currency",
     "navigationCategory": "Navigation entry point",
@@ -222,6 +227,7 @@
     "shipping_method": "Shipping methods",
     "customer_group": "Customer groups",
     "sales_channel": "Sales channels",
+    "sales_channel_domain": "Sales channel domains",
     "user": "Users",
     "acl_role": "Roles",
     "integration": "Integrations",
