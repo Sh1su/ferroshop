@@ -6,6 +6,7 @@ Audit date: 2026-10-29
 
 This audit uses [Shopware Community Edition 6.7.15.1](https://github.com/shopware/shopware/releases/tag/v6.7.15.1), the latest 6.7 release published on the audit date, as its feature reference. The feature inventory comes from the official [Shopware Core overview](https://docs.shopware.com/en/shopware-6-en/features/shopware-core). The repository does not pin a Shopware Frontends package version or run a Frontends application end-to-end yet. Existing Store API integration tests assert local HTTP response contracts in CI; they do not compare responses against a running Shopware instance. Tracking and closing that gap is part of [issue #1](https://github.com/Sh1su/ferroshop/issues/1).
 
+
 This matrix compares ferroshop with the Shopware Community Edition feature overview in the [official Shopware documentation](https://docs.shopware.com/en/shopware-6-en/features/shopware-core). It covers Shopware Core features only. Paid-plan features, hosting, support, and third-party extensions are outside this comparison. “Supported” means the repository contains an implementation; it does not imply full API or behavioral parity.
 
 ## Feature matrix
@@ -38,11 +39,10 @@ This matrix compares ferroshop with the Shopware Community Edition feature overv
 ## Already implemented adjacent commerce flows
 
 The repository also implements Store API context, catalog browsing, carts, customer accounts, checkout/order placement, order history, SEO URL resolution, product variants, and selected Shopware Frontends routes. These are useful compatibility foundations, but README checkmarks mean feature presence, not complete Shopware contract parity.
-
 ## Work remaining before claiming Community Edition parity
 
 1. Complete sales-channel and commerce configuration: domains, tax rules, and safe activation, then cover the flows with Admin API/UI tests (issue #9).
-2. Define a versioned compatibility baseline and executable contract suite (issue #1).
+2. Pin a Shopware Frontends package version and add a Shopware-backed contract flow to CI (issue #1).
 3. Implement rules and promotions, including deterministic cart discounts (issue #7).
 4. Implement extensibility, lifecycle events, and custom fields (issue #8).
 5. Add the missing Community Edition capabilities above: visual CMS editor, workflows, reviews, cross-selling, tags, dynamic product groups, digital products, and data import/export.
