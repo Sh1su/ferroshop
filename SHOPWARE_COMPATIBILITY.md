@@ -1,0 +1,46 @@
+# Shopware Community Edition compatibility
+
+Audit date: 2026-10-29
+
+This matrix compares ferroshop with the Shopware Community Edition feature overview in the [official Shopware documentation](https://docs.shopware.com/en/shopware-6-en/features/shopware-core). It covers Shopware Core features only. Paid-plan features, hosting, support, and third-party extensions are outside this comparison. “Supported” means the repository contains an implementation; it does not imply full API or behavioral parity.
+
+## Feature matrix
+
+| Shopware Community Edition feature | ferroshop status | Repository evidence / remaining work |
+| --- | --- | --- |
+| Shopping Experiences | Partial | CMS pages, sections, blocks, slots, selected block data resolvers and category assignment exist. Page authoring is API-only; there is no visual drag-and-drop editor. |
+| Roles and permissions | Partial | Admin users, roles, ACL checks, and permission-aware views exist. There is no Shopware plugin/extension permission surface. |
+| Rule Builder | Missing | No rule entity, condition editor, evaluator, or rule-based shipping/tax/pricing behavior. |
+| Flow Builder | Missing | No event workflow designer, action graph, or durable workflow execution. |
+| Customer groups and gross/net display | Partial | Customer groups select gross/net display. Customer-specific pricing and broader group-based content rules are absent. |
+| Promotions | Missing | No promotion/voucher model, administration, redemption, stacking, or discount allocation. |
+| SEO | Partial | Generated product/category URLs and rename history exist. SEO template configuration and comprehensive CMS/domain routing parity are not established. |
+| Search | Partial | Store API product search and listing filters exist. Shopware search configuration and full relevance/synonym behavior are absent. |
+| Cross-selling | Missing | The product cross-selling route currently returns an empty result for every product. |
+| Product reviews | Missing | The product reviews route currently returns an empty result; no review storage or moderation UI exists. |
+| Tag management | Missing | No tag entity or tag assignment workflows are present. |
+| Physical products | Partial | Product prices, stock, dimensions, purchase rules, variants, and closeout behavior exist; fulfillment parity is not complete. |
+| Digital products | Missing | No downloadable product/file entitlement or delivery workflow is present. |
+| Dynamic product groups | Missing | No saved product rule sets or dynamic merchandising groups are present. |
+| Payment method integration | Partial | Payment methods can be configured and an offline/manual path exists. Provider integrations and payment webhooks are absent. |
+| Shipping provider integration | Partial | Shipping methods and static prices exist. Provider integrations, shipping rules, and fulfillment labels are absent. |
+| Category management | Supported | Categories, hierarchy, products, listing pages, and CMS page assignment exist. |
+| Sales channels | Partial | Store API context and default references exist. Sales-channel domains and full channel-specific configuration are missing. |
+| Currency and tax management | Partial | Currency and flat tax-rate records exist. Tax rules by country/region, priority, and customer context are absent. |
+| Multiple languages | Partial | Translated entities and language selection exist. Import, fallback, and channel-domain localization parity are incomplete. |
+| Import/export | Missing | There is no data import/export workflow; demo-data and SEO-generation CLI commands are not substitutes. |
+| Extension ecosystem | Missing | Entity definitions are compile-time and there is no plugin lifecycle, extension loader, or event/job contract. |
+
+## Already implemented adjacent commerce flows
+
+The repository also implements Store API context, catalog browsing, carts, customer accounts, checkout/order placement, order history, SEO URL resolution, product variants, and selected Shopware Frontends routes. These are useful compatibility foundations, but README checkmarks mean feature presence, not complete Shopware contract parity.
+
+## Work remaining before claiming Community Edition parity
+
+1. Complete sales-channel and commerce configuration: domains, tax rules, and safe activation, then cover the flows with Admin API/UI tests (issue #9).
+2. Define a versioned compatibility baseline and executable contract suite (issue #1).
+3. Implement rules and promotions, including deterministic cart discounts (issue #7).
+4. Implement extensibility, lifecycle events, and custom fields (issue #8).
+5. Add the missing Community Edition capabilities above: visual CMS editor, workflows, reviews, cross-selling, tags, dynamic product groups, digital products, and data import/export.
+
+This order is a proposed implementation sequence, not a claim that the work is complete.
