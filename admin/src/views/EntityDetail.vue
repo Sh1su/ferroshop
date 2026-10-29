@@ -67,6 +67,12 @@ async function validateSalesChannelActivation(): Promise<boolean> {
     notice.value = { variant: 'critical', text: t('salesChannel.activationIncomplete') }
     return false
   }
+  if (isNew.value) {
+    nextErrors['/active'] = { code: 'invalid', detail: t('salesChannel.activationRequiresDomain') }
+    errors.value = nextErrors
+    notice.value = { variant: 'critical', text: t('salesChannel.activationIncomplete') }
+    return false
+  }
   await Promise.all(salesChannelDefaults.map(async ({ field, entity, mustBeActive }) => {
     try {
       const record = await repository<Record<string, unknown>>(entity.replace(/_/g, '-')).get(String(form[field]))
@@ -75,6 +81,19 @@ async function validateSalesChannelActivation(): Promise<boolean> {
       nextErrors[`/${field}`] = { code: 'invalid', detail: t('salesChannel.referenceUnavailable') }
     }
   }))
+  if (!Object.keys(nextErrors).length) {
+    try {
+      const domains = await repository<Record<string, unknown>>('sales-channel-domain').search({
+        limit: 1,
+        filter: [{ type: 'equals', field: 'salesChannelId', value: props.id }],
+      })
+      if (domains.data.length === 0) {
+        nextErrors['/active'] = { code: 'invalid', detail: t('salesChannel.activationRequiresDomain') }
+      }
+    } catch {
+      nextErrors['/active'] = { code: 'invalid', detail: t('salesChannel.domainCheckFailed') }
+    }
+  }
   if (Object.keys(nextErrors).length) {
     errors.value = nextErrors
     notice.value = { variant: 'critical', text: t('salesChannel.activationIncomplete') }
@@ -99,7 +118,7 @@ function initial(field: FormField, entity?: Record<string, unknown>): unknown {
     case 'password':
       return ''
     default:
-      return value ?? null
+    return entity ? value ?? null : field.default ?? null
   }
 }
 
