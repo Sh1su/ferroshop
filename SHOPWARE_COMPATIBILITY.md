@@ -30,9 +30,9 @@ This matrix compares ferroshop with the Shopware Community Edition feature overv
 | Payment method integration | Partial | Payment methods can be configured and an offline/manual path exists. Provider integrations and payment webhooks are absent. |
 | Shipping provider integration | Partial | Shipping methods and static prices exist. Provider integrations, shipping rules, and fulfillment labels are absent. |
 | Category management | Supported | Categories, hierarchy, products, listing pages, and CMS page assignment exist. |
-| Sales channels | Partial | Store API context and default references exist. Sales-channel domains and full channel-specific configuration are missing. |
+| Sales channels | Partial | Store API context, per-domain URL/language/currency, admin CRUD, and draft-before-activation validation exist. Domain-scoped snippet sets, channel-specific available-country/currency/method assignments, and full Shopware configuration parity remain open. |
 | Currency and tax management | Partial | Currency and flat tax-rate records exist. Tax rules by country/region, priority, and customer context are absent. |
-| Multiple languages | Partial | Translated entities and language selection exist. Import, fallback, and channel-domain localization parity are incomplete. |
+| Multiple languages | Partial | Translated entities and language selection exist; domains can select a language and currency and browser-language preference. Import, snippet-set selection, and full fallback parity are incomplete. |
 | Import/export | Missing | There is no data import/export workflow; demo-data and SEO-generation CLI commands are not substitutes. |
 | Extension ecosystem | Missing | Entity definitions are compile-time and there is no plugin lifecycle, extension loader, or event/job contract. |
 
@@ -41,7 +41,7 @@ This matrix compares ferroshop with the Shopware Community Edition feature overv
 The repository also implements Store API context, catalog browsing, carts, customer accounts, checkout/order placement, order history, SEO URL resolution, product variants, and selected Shopware Frontends routes. These are useful compatibility foundations, but README checkmarks mean feature presence, not complete Shopware contract parity.
 ## Work remaining before claiming Community Edition parity
 
-1. Complete sales-channel and commerce configuration: domains, tax rules, and safe activation, then cover the flows with Admin API/UI tests (issue #9).
+1. Complete sales-channel and commerce configuration: tax rules, channel-specific assignments, and broader Admin API/UI coverage (issue #9).
 2. Pin a Shopware Frontends package version and add a Shopware-backed contract flow to CI (issue #1).
 3. Implement rules and promotions, including deterministic cart discounts (issue #7).
 4. Implement extensibility, lifecycle events, and custom fields (issue #8).
