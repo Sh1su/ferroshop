@@ -61,7 +61,7 @@ const sections = computed(() =>
     { label: 'nav.sales', items: [entry('orders'), entry('customers')] },
     {
       label: 'nav.settings',
-      items: ['taxes', 'currencies', 'languages', 'countries', 'paymentMethods', 'shippingMethods', 'customerGroups', 'salesChannels', 'users', 'roles'].map(entry),
+      items: ['taxes', 'currencies', 'languages', 'countries', 'paymentMethods', 'shippingMethods', 'customerGroups', 'salesChannels', 'salesChannelDomains', 'users', 'roles'].map(entry),
     },
   ]
     // Reference data is readable by everyone; only list it for people who can maintain it.
