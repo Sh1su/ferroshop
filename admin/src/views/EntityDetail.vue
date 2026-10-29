@@ -46,6 +46,43 @@ const readOnly = computed(() =>
 // Allowed in general, but this record (an administrator) is reserved for administrators.
 const protectedTarget = computed(() => !isNew.value && can(config.value.entity, 'update') && readOnly.value)
 
+const salesChannelDefaults: { field: string; entity: string; mustBeActive?: boolean }[] = [
+  { field: 'languageId', entity: 'language' },
+  { field: 'currencyId', entity: 'currency' },
+  { field: 'navigationCategoryId', entity: 'category', mustBeActive: true },
+  { field: 'customerGroupId', entity: 'customer_group' },
+  { field: 'countryId', entity: 'country', mustBeActive: true },
+  { field: 'paymentMethodId', entity: 'payment_method', mustBeActive: true },
+  { field: 'shippingMethodId', entity: 'shipping_method', mustBeActive: true },
+]
+
+async function validateSalesChannelActivation(): Promise<boolean> {
+  if (config.value.key !== 'salesChannels' || form.active !== true) return true
+  const nextErrors: Record<string, { code: string; detail: string }> = {}
+  for (const { field } of salesChannelDefaults) {
+    if (!form[field]) nextErrors[`/${field}`] = { code: 'invalid', detail: t('salesChannel.activationRequired') }
+  }
+  if (Object.keys(nextErrors).length) {
+    errors.value = nextErrors
+    notice.value = { variant: 'critical', text: t('salesChannel.activationIncomplete') }
+    return false
+  }
+  await Promise.all(salesChannelDefaults.map(async ({ field, entity, mustBeActive }) => {
+    try {
+      const record = await repository<Record<string, unknown>>(entity.replace(/_/g, '-')).get(String(form[field]))
+      if (mustBeActive && record.active !== true) nextErrors[`/${field}`] = { code: 'invalid', detail: t('salesChannel.referenceInactive') }
+    } catch {
+      nextErrors[`/${field}`] = { code: 'invalid', detail: t('salesChannel.referenceUnavailable') }
+    }
+  }))
+  if (Object.keys(nextErrors).length) {
+    errors.value = nextErrors
+    notice.value = { variant: 'critical', text: t('salesChannel.activationIncomplete') }
+    return false
+  }
+  return true
+}
+
 function initial(field: FormField, entity?: Record<string, unknown>): unknown {
   const value = entity?.[field.name]
   switch (field.type) {
@@ -139,7 +176,8 @@ function payload(): Record<string, unknown> {
 }
 
 async function save() {
-  saving.value = true
+    if (!(await validateSalesChannelActivation())) return
+saving.value = true
   errors.value = {}
   notice.value = null
   try {
