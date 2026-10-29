@@ -41,6 +41,20 @@ entity! {
         one_to_many("products", "product", "taxId"),
     }
 }
+entity! {
+    pub static TAX_RULE = "tax_rule" in "tax_rule" {
+        id("id"),
+        fk("taxId", "tax_id", "tax") [REQUIRED],
+        fk("countryId", "country_id", "country") [REQUIRED],
+        float("taxRate", "tax_rate") [REQUIRED],
+        int("priority", "priority"),
+        datetime("createdAt", "created_at") [READ_ONLY],
+        datetime("updatedAt", "updated_at") [READ_ONLY],
+        many_to_one("tax", "tax", "taxId"),
+        many_to_one("country", "country", "countryId"),
+    }
+}
+
 
 entity! {
     pub static CATEGORY = "category" in "category" translations "category_translation" {
@@ -590,7 +604,7 @@ pub static ALL: &[&EntityDefinition] = &[
     &USER,
     &ACL_ROLE,
     &INTEGRATION,
-    &COUNTRY,
+    &COUNTRY, &TAX_RULE,
     &CUSTOMER_GROUP,
     &PAYMENT_METHOD,
     &SHIPPING_METHOD,
