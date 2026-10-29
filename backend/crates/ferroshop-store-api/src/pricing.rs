@@ -31,7 +31,7 @@ fn collect_tax_ids(value: &Value, out: &mut Vec<String>) {
     }
 }
 
-pub(crate) async fn tax_rates(db: &Db, data: &[Value]) -> Result<HashMap<String, Decimal>, ApiError> {
+pub(crate) async fn tax_rates(db: &Db, data: &[Value], country_id: uuid::Uuid) -> Result<HashMap<String, Decimal>, ApiError> {
     let mut ids = Vec::new();
     data.iter().for_each(|row| collect_tax_ids(row, &mut ids));
     ids.sort();
@@ -40,7 +40,7 @@ pub(crate) async fn tax_rates(db: &Db, data: &[Value]) -> Result<HashMap<String,
         return Ok(HashMap::new());
     }
     let rows =
-        sqlx::query("SELECT id, tax_rate FROM tax WHERE id = ANY($1::text[]::uuid[])").bind(&ids).fetch_all(db).await?;
+        sqlx::query("SELECT t.id, COALESCE(r.tax_rate, t.tax_rate) AS tax_rate FROM tax t LEFT JOIN LATERAL (SELECT tax_rate FROM tax_rule WHERE tax_id = t.id AND country_id = $2 ORDER BY priority DESC, id ASC LIMIT 1) r ON true WHERE t.id = ANY($1::text[]::uuid[])").bind(&ids).bind(country_id).fetch_all(db).await?;
     rows.into_iter()
         .map(|r| Ok((id::format(r.try_get("id")?), r.try_get("tax_rate")?)))
         .collect::<Result<_, sqlx::Error>>()
@@ -77,7 +77,7 @@ fn apply(value: &mut Value, rates: &HashMap<String, Decimal>, sc: &SalesChannelC
 /// `availableStock` on all products, nested ones included. Must run before `includes` strip the
 /// fields they are computed from.
 pub async fn enrich(db: &Db, sc: &SalesChannelContext, data: &mut [Value]) -> Result<(), ApiError> {
-    let rates = tax_rates(db, data).await?;
+    let rates = tax_rates(db, data, sc.country_id).await?;
     data.iter_mut().for_each(|row| apply(row, &rates, sc));
     Ok(())
 }
