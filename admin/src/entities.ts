@@ -245,7 +245,7 @@ export const modules: EntityModule[] = [
     titleField: 'name',
   },
   {
-    key: 'currencies',
+    key: 'taxRules', entity: 'tax_rule', group: 'settings', columns: [{ path: 'tax.name', label: 'fields.tax' }, { path: 'country.translated.name', label: 'fields.country' }, { path: 'taxRate', label: 'fields.taxRate', sort: 'taxRate', format: 'percent' }, { path: 'priority', label: 'fields.priority', sort: 'priority' }], fields: [{ name: 'taxId', label: 'fields.taxClass', type: 'select', entity: 'tax', optionLabel: 'name', required: true }, { name: 'countryId', label: 'fields.country', type: 'select', entity: 'country', optionLabel: 'translated.name', required: true, default: COUNTRY_DE }, { name: 'taxRate', label: 'fields.taxRate', type: 'float', required: true, default: 19 }, { name: 'priority', label: 'fields.priority', type: 'int', default: 1 }], associations: { tax: {}, country: {} }, defaultSort: 'priority', titleField: 'taxRate' }, { key: 'currencies',
     entity: 'currency',
     group: 'settings',
     columns: [
