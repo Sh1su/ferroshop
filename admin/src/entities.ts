@@ -3,6 +3,16 @@
  * the list columns and the form fields; labels are i18n keys under `fields.*`.
  */
 
+import {
+  COUNTRY_DE,
+  CURRENCY_DEFAULT,
+  CUSTOMER_GROUP_DEFAULT,
+  LANGUAGE_DE,
+  PAYMENT_PREPAYMENT,
+  ROOT_CATEGORY,
+  SHIPPING_STANDARD,
+} from './api/defaults'
+
 export type ColumnFormat = 'text' | 'currency' | 'date' | 'bool' | 'state' | 'percent'
 
 export interface Column {
@@ -228,14 +238,14 @@ export const modules: EntityModule[] = [
     ],
     fields: [
       { name: 'name', label: 'fields.name', type: 'text', required: true },
-      { name: 'taxRate', label: 'fields.taxRate', type: 'float', required: true },
-      { name: 'position', label: 'fields.position', type: 'int' },
+      { name: 'taxRate', label: 'fields.taxRate', type: 'float', required: true, default: 19 },
+      { name: 'position', label: 'fields.position', type: 'int', default: 0 },
     ],
     defaultSort: 'position',
     titleField: 'name',
   },
   {
-    key: 'currencies',
+    key: 'taxRules', entity: 'tax_rule', group: 'settings', columns: [{ path: 'tax.name', label: 'fields.tax' }, { path: 'country.translated.name', label: 'fields.country' }, { path: 'taxRate', label: 'fields.taxRate', sort: 'taxRate', format: 'percent' }, { path: 'priority', label: 'fields.priority', sort: 'priority' }], fields: [{ name: 'taxId', label: 'fields.taxClass', type: 'select', entity: 'tax', optionLabel: 'name', required: true }, { name: 'countryId', label: 'fields.country', type: 'select', entity: 'country', optionLabel: 'translated.name', required: true, default: COUNTRY_DE }, { name: 'taxRate', label: 'fields.taxRate', type: 'float', required: true, default: 19 }, { name: 'priority', label: 'fields.priority', type: 'int', default: 1 }], associations: { tax: {}, country: {} }, defaultSort: 'priority', titleField: 'taxRate' }, { key: 'currencies',
     entity: 'currency',
     group: 'settings',
     columns: [
@@ -249,9 +259,9 @@ export const modules: EntityModule[] = [
       { name: 'shortName', label: 'fields.shortName', type: 'text', required: true },
       { name: 'isoCode', label: 'fields.isoCode', type: 'text', required: true },
       { name: 'symbol', label: 'fields.symbol', type: 'text', required: true },
-      { name: 'factor', label: 'fields.factor', type: 'float', required: true },
-      { name: 'decimalPrecision', label: 'fields.decimalPrecision', type: 'int' },
-      { name: 'position', label: 'fields.position', type: 'int' },
+      { name: 'factor', label: 'fields.factor', type: 'float', required: true, default: 1 },
+      { name: 'decimalPrecision', label: 'fields.decimalPrecision', type: 'int', default: 2 },
+      { name: 'position', label: 'fields.position', type: 'int', default: 0 },
     ],
     defaultSort: 'position',
     titleField: 'translated.name',
@@ -343,6 +353,27 @@ export const modules: EntityModule[] = [
     titleField: 'translated.name',
   },
   {
+    key: 'salesChannelDomains',
+    entity: 'sales_channel_domain',
+    group: 'settings',
+    columns: [
+      { path: 'url', label: 'fields.domainUrl', sort: 'url' },
+      { path: 'salesChannel.translated.name', label: 'fields.salesChannel' },
+      { path: 'language.name', label: 'fields.language' },
+      { path: 'currency.isoCode', label: 'fields.currency' },
+    ],
+    fields: [
+      { name: 'url', label: 'fields.domainUrl', type: 'text', required: true },
+      { name: 'salesChannelId', label: 'fields.salesChannel', type: 'select', entity: 'sales_channel', optionLabel: 'translated.name', required: true },
+      { name: 'languageId', label: 'fields.language', type: 'select', entity: 'language', optionLabel: 'name', required: true, default: LANGUAGE_DE },
+      { name: 'currencyId', label: 'fields.currency', type: 'select', entity: 'currency', optionLabel: 'translated.name', required: true, default: CURRENCY_DEFAULT },
+      { name: 'browserLanguage', label: 'fields.browserLanguage', type: 'bool', default: false },
+    ],
+    associations: { salesChannel: {}, language: {}, currency: {} },
+    defaultSort: 'url',
+    titleField: 'url',
+  },
+  {
     key: 'salesChannels',
     entity: 'sales_channel',
     group: 'settings',
@@ -354,19 +385,20 @@ export const modules: EntityModule[] = [
     fields: [
       { name: 'name', label: 'fields.name', type: 'text', required: true },
       { name: 'accessKey', label: 'fields.accessKey', type: 'text', required: true },
-      { name: 'languageId', label: 'fields.language', type: 'select', entity: 'language', optionLabel: 'name', required: true },
-      { name: 'currencyId', label: 'fields.currency', type: 'select', entity: 'currency', optionLabel: 'translated.name', required: true },
+      { name: 'languageId', label: 'fields.language', type: 'select', entity: 'language', optionLabel: 'name', required: true, default: LANGUAGE_DE },
+      { name: 'currencyId', label: 'fields.currency', type: 'select', entity: 'currency', optionLabel: 'translated.name', required: true, default: CURRENCY_DEFAULT },
       {
         name: 'navigationCategoryId',
         label: 'fields.navigationCategory',
         type: 'select',
         entity: 'category',
         optionLabel: 'translated.name',
+        default: ROOT_CATEGORY,
       },
-      { name: 'customerGroupId', label: 'fields.customerGroup', type: 'select', entity: 'customer_group', optionLabel: 'translated.name' },
-      { name: 'countryId', label: 'fields.country', type: 'select', entity: 'country', optionLabel: 'translated.name' },
-      { name: 'paymentMethodId', label: 'fields.paymentMethod', type: 'select', entity: 'payment_method', optionLabel: 'translated.name' },
-      { name: 'shippingMethodId', label: 'fields.shippingMethod', type: 'select', entity: 'shipping_method', optionLabel: 'translated.name' },
+      { name: 'customerGroupId', label: 'fields.customerGroup', type: 'select', entity: 'customer_group', optionLabel: 'translated.name', default: CUSTOMER_GROUP_DEFAULT },
+      { name: 'countryId', label: 'fields.country', type: 'select', entity: 'country', optionLabel: 'translated.name', default: COUNTRY_DE },
+      { name: 'paymentMethodId', label: 'fields.paymentMethod', type: 'select', entity: 'payment_method', optionLabel: 'translated.name', default: PAYMENT_PREPAYMENT },
+      { name: 'shippingMethodId', label: 'fields.shippingMethod', type: 'select', entity: 'shipping_method', optionLabel: 'translated.name', default: SHIPPING_STANDARD },
       { name: 'active', label: 'fields.active', type: 'bool', default: false },
     ],
     defaultSort: 'name',

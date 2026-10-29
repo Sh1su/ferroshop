@@ -136,10 +136,18 @@ pub async fn create(
     body: Bytes,
 ) -> Result<Response, ApiError> {
     let ctx = context(&headers, &principal)?;
-    let payload = parse_body(&body)?;
+    let mut payload = parse_body(&body)?;
     let def = permission::definition(&entity)?;
     permission::require(&perms, def.name, Action::Create)?;
     permission::require_write(&perms, def, &payload)?;
+    if def.name == "sales_channel" {
+        let fields = payload.as_object_mut().ok_or_else(|| ApiError::BadRequest("expected a JSON object".into()))?;
+        if fields.get("active").and_then(Value::as_bool) == Some(true) {
+            return Err(ApiError::BadRequest("create the sales channel as a draft and add a domain before activation".into()));
+        }
+        // The database default predates draft validation; API-created channels must opt in to going live.
+        fields.entry("active").or_insert(Value::Bool(false));
+    }
     let entity_id = write::write(&state.db, &entity, &payload, WriteMode::Create, &ctx).await?;
     refresh_seo(&state, def.name, vec![entity_id]).await;
     write_response(&state, &entity, entity_id, &ctx, &query).await
@@ -166,6 +174,18 @@ pub async fn update(
             map.insert("id".into(), Value::String(entity_id));
         }
         None => return Err(ApiError::BadRequest("expected a JSON object".into())),
+    }
+    if def.name == "sales_channel" && payload.get("active").and_then(Value::as_bool) == Some(true) {
+        let channel_id = id::parse(&entity_id).expect("validated target id");
+        let has_domain: bool = sqlx::query_scalar(
+            "SELECT EXISTS (SELECT 1 FROM sales_channel_domain WHERE sales_channel_id = $1)",
+        )
+        .bind(channel_id)
+        .fetch_one(&state.db)
+        .await?;
+        if !has_domain {
+            return Err(ApiError::BadRequest("add at least one sales channel domain before activation".into()));
+        }
     }
     let entity_id = write::write(&state.db, &entity, &payload, WriteMode::Update, &ctx).await?;
     if changes_password {

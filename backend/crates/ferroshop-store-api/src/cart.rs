@@ -228,7 +228,7 @@ pub async fn calculate(
         let found = catalog::search(state, sc, "product", criteria, guard::MAX_LIMIT).await?.data;
         found.into_iter().map(|p| (p["id"].as_str().unwrap_or_default().to_string(), p)).collect()
     };
-    let rates = pricing::tax_rates(&state.db, &products.values().cloned().collect::<Vec<_>>()).await?;
+    let rates = pricing::tax_rates(&state.db, &products.values().cloned().collect::<Vec<_>>(), sc.country_id).await?;
 
     let mut items = Vec::new();
     let mut lines = Vec::new();
@@ -537,7 +537,7 @@ pub async fn remove(
     let ids: Vec<String> = pairs
         .into_iter()
         .filter(|(key, _)| key == "ids" || key == "ids[]" || key.starts_with("ids["))
-        .flat_map(|(_, value)| value.split('|').map(str::to_string).collect::<Vec<_>>())
+        .flat_map(|(_, value)| value.split('|').map(str::to_string).collect::<Vec<_>>(), sc.country_id)
         .collect();
     change(&state, &sc, |items| remove_ids(items, &ids)).await
 }

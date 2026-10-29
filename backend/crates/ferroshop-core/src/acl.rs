@@ -35,7 +35,7 @@ impl Action {
 pub const PUBLIC_READ: &[&str] = &[
     "language",
     "currency",
-    "tax",
+    "tax", "tax_rule",
     "country",
     "customer_group",
     "payment_method",
