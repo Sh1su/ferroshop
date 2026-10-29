@@ -176,11 +176,12 @@ function payload(): Record<string, unknown> {
 }
 
 async function save() {
-    if (!(await validateSalesChannelActivation())) return
-saving.value = true
+  if (saving.value) return
+  saving.value = true
   errors.value = {}
   notice.value = null
   try {
+    if (!(await validateSalesChannelActivation())) return
     if (isNew.value) {
       const created = await repo.value.create(payload())
       await router.replace({ name: 'entity.detail', params: { module: props.module, id: created.id as string } })
@@ -225,7 +226,7 @@ watch(() => [props.module, props.id], load, { immediate: true })
         <RouterLink :to="{ name: 'entity.list', params: { module } }">← {{ t(`modules.${module}`) }}</RouterLink>
         <h1>{{ title }}</h1>
       </div>
-      <MtButton v-if="!readOnly" variant="primary" :is-loading="saving" :disabled="loading" @click="save">
+      <MtButton v-if="!readOnly" variant="primary" :is-loading="saving" :disabled="loading || saving" @click="save">
         {{ t('common.save') }}
       </MtButton>
     </div>
