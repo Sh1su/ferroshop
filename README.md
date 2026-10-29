@@ -31,6 +31,7 @@ An open-source e-commerce backend written in Rust, modelled on the
 | Properties & variants: property groups/options, variant generator, configurator, find-variant, property filters | ✅ |
 | Shopping experiences: CMS pages, default listing page, `/store-api/cms/{id}`, `cmsPage` on categories | ✅ |
 | Frontends routes: breadcrumbs, salutations, handle-payment, order cancel (restocks), payment method change, `available` | ✅ |
+| Checkout integrations: invoice PDF, DHL shipping, Stripe/PayPal, label printing | sandbox/mock foundation in [`integrations/`](integrations/README.md); not yet wired to the live Store/Admin APIs |
 | Shopware Community Edition feature parity | partial: see the [compatibility matrix](SHOPWARE_COMPATIBILITY.md) for implemented areas and remaining gaps |
 | Visual layout editor, password recovery and mails, wishlist, reviews, cross-selling; Frontends run end-to-end | next |
 
@@ -52,6 +53,11 @@ cd ../admin
 npm ci
 npm run dev                 # http://localhost:5173/admin/  (proxies /api)
 ```
+
+Integration mocks run separately from ferroshop and are limited to loopback. Start them with
+`python3 integrations/mock_services/server.py`; run their HTTP contract tests with
+`python3 -m unittest discover -s integrations/mock_services -p 'test_*.py' -v`. See the
+[integration defaults and contracts](integrations/README.md) before configuring a real provider.
 
 Or everything in Docker:
 
