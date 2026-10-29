@@ -68,13 +68,13 @@
     "generateVariants": "Generate variants",
     "variantsGenerated": "{count} variants created."
   },
-    "salesChannel": {
+  "salesChannel": {
     "activationIncomplete": "Complete the sales channel defaults before activating it.",
     "activationRequired": "Choose this default before activating the sales channel.",
     "referenceInactive": "Choose an active item before activating the sales channel.",
     "referenceUnavailable": "This item is no longer available. Choose another one."
   },
-"errors": {
+  "errors": {
     "FRAMEWORK__WRITE_CONSTRAINT_VIOLATION": "This field is required.",
     "FRAMEWORK__DUPLICATE_ENTRY": "This value is already in use.",
     "FRAMEWORK__INVALID_TYPE": "The value has the wrong format.",
