@@ -58,6 +58,13 @@ impl Error {
                         db.message().to_string(),
                     )]);
                 }
+                Some("23514") => {
+                    return Self::Validation(vec![WriteError::new(
+                        "/",
+                        "FRAMEWORK__WRITE_CONSTRAINT_VIOLATION",
+                        db.message().to_string(),
+                    )]);
+                }
                 _ => {}
             }
         }
