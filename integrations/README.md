@@ -15,6 +15,8 @@ This integration boundary is intentionally sandbox-first. The repository's curre
 | Shipping | DHL test adapter | Live DHL credentials and service configuration are separate from the mock server. |
 | Label format | ZPL for common network label printers; PDF download also supported by the mock | Printer host, media size, and DPI must be configured per device. |
 
+The Admin starts new storefront channels as drafts and preselects the seeded DE / EUR / standard-customer / Germany / prepayment / standard-shipping references. Currency forms start with factor `1` and 2 decimal places; new tax-rate forms start at the German standard example of `19%`. A channel can be activated after it has at least one domain configured with an absolute URL, language, and currency. Add different language/currency combinations as separate domain records.
+
 ## Invoice PDF requirements
 
 An invoice must be issued from an immutable order snapshot, with a unique sequential invoice number, issue date, seller and buyer addresses, currency, line items, net/tax/gross totals grouped by tax rate, and references to the source order. Re-downloading the invoice must return the same content. Order changes after issuance must not rewrite it; corrections should create a credit note or a replacement document with an audit trail. The PDF output must be tested for its content and HTTP headers before production use.
