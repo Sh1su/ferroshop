@@ -23,7 +23,7 @@ An open-source e-commerce backend written in Rust, modelled on the
 | Entities: product, category, manufacturer, tax, currency, language, sales channel, user, ACL role, integration | ✅ |
 | Administration: login, product list, product detail (translations, prices, variants, categories), de/en | ✅ |
 | Customers, orders (state machines), media (local/S3, thumbnails), roles & permissions | ✅ |
-| Administration: customers, orders, media library, master data, roles, profile | partial: sales-channel activation validation added; domains remain unsupported ([#9](https://github.com/Sh1su/ferroshop/issues/9)) |
+| Administration: customers, orders, media library, master data, roles, profile | partial: domain CRUD and sales-channel activation validation added; full channel-specific configuration remains open ([#9](https://github.com/Sh1su/ferroshop/issues/9)) |
 | Store-API: context, products, category listings, search, navigation, master data, calculated prices | ✅ |
 | Store-API: cart (line items, purchase rules, closeout stock, shipping costs, tax totals) | ✅ |
 | Store-API: registration (incl. guests), login, profile, password, e-mail, addresses, checkout, order history | ✅ |
