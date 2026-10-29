@@ -68,6 +68,12 @@
     "generateVariants": "Varianten generieren",
     "variantsGenerated": "{count} Varianten angelegt."
   },
+  "salesChannel": {
+    "activationIncomplete": "Ergänze die Standardwerte des Verkaufskanals, bevor du ihn aktivierst.",
+    "activationRequired": "Wähle diesen Standardwert, bevor du den Verkaufskanal aktivierst.",
+    "referenceInactive": "Wähle einen aktiven Eintrag, bevor du den Verkaufskanal aktivierst.",
+    "referenceUnavailable": "Dieser Eintrag ist nicht mehr verfügbar. Wähle einen anderen."
+  },
   "errors": {
     "FRAMEWORK__WRITE_CONSTRAINT_VIOLATION": "Dieses Feld ist ein Pflichtfeld.",
     "FRAMEWORK__DUPLICATE_ENTRY": "Dieser Wert wird bereits verwendet.",
