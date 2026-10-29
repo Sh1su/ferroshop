@@ -92,6 +92,23 @@ entity! {
         many_to_one("country", "country", "countryId"),
         many_to_one("paymentMethod", "payment_method", "paymentMethodId"),
         many_to_one("shippingMethod", "shipping_method", "shippingMethodId"),
+        one_to_many("domains", "sales_channel_domain", "salesChannelId"),
+    }
+}
+
+entity! {
+    pub static SALES_CHANNEL_DOMAIN = "sales_channel_domain" in "sales_channel_domain" {
+        id("id"),
+        fk("salesChannelId", "sales_channel_id", "sales_channel") [REQUIRED],
+        string("url", "url") [REQUIRED | SEARCHABLE],
+        fk("languageId", "language_id", "language") [REQUIRED],
+        fk("currencyId", "currency_id", "currency") [REQUIRED],
+        bool("browserLanguage", "browser_language"),
+        datetime("createdAt", "created_at") [READ_ONLY],
+        datetime("updatedAt", "updated_at") [READ_ONLY],
+        many_to_one("salesChannel", "sales_channel", "salesChannelId"),
+        many_to_one("language", "language", "languageId"),
+        many_to_one("currency", "currency", "currencyId"),
     }
 }
 
@@ -567,6 +584,7 @@ pub static ALL: &[&EntityDefinition] = &[
     &TAX,
     &CATEGORY,
     &SALES_CHANNEL,
+    &SALES_CHANNEL_DOMAIN,
     &PRODUCT_MANUFACTURER,
     &PRODUCT,
     &USER,
